@@ -1,0 +1,352 @@
+{
+  "selected": "balanced_forest",
+  "selection_metric": "validation macro-F1",
+  "seed": 42,
+  "labels": [
+    "Fatal injury",
+    "Serious Injury",
+    "Slight Injury"
+  ],
+  "dataset": {
+    "source": "https://raw.githubusercontent.com/avikumart/Road-Traffic-Severity-Classification-Project/main/RTA%20Dataset.csv",
+    "sha256": "975716a9e7014e5f49eaca3cf7ba282f3fa7a36db3a30fca79d7cb42e06df053",
+    "raw_rows": 12316,
+    "unique_rows": 12316,
+    "removed_duplicates": 0,
+    "selected_feature_groups": 11290
+  },
+  "split": {
+    "method": "GroupShuffleSplit on identical selected-feature profiles",
+    "rows": {
+      "train": 7861,
+      "validation": 1962,
+      "test": 2493
+    },
+    "class_counts": {
+      "train": {
+        "Slight Injury": 6654,
+        "Serious Injury": 1113,
+        "Fatal injury": 94
+      },
+      "validation": {
+        "Slight Injury": 1650,
+        "Serious Injury": 279,
+        "Fatal injury": 33
+      },
+      "test": {
+        "Slight Injury": 2111,
+        "Serious Injury": 351,
+        "Fatal injury": 31
+      }
+    },
+    "profile_overlap": 0
+  },
+  "models": {
+    "majority": {
+      "validation_macro_f1": 0.30454042081949056,
+      "test": {
+        "accuracy": 0.8467709586843161,
+        "balanced_accuracy": 0.3333333333333333,
+        "macro_f1": 0.305676223573704,
+        "log_loss": 5.5229344543292225,
+        "per_class": {
+          "Fatal injury": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 31.0
+          },
+          "Serious Injury": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 351.0
+          },
+          "Slight Injury": {
+            "precision": 0.8467709586843161,
+            "recall": 1.0,
+            "f1-score": 0.917028670721112,
+            "support": 2111.0
+          },
+          "accuracy": 0.8467709586843161,
+          "macro avg": {
+            "precision": 0.28225698622810536,
+            "recall": 0.3333333333333333,
+            "f1-score": 0.305676223573704,
+            "support": 2493.0
+          },
+          "weighted avg": {
+            "precision": 0.7170210564711558,
+            "recall": 0.8467709586843161,
+            "f1-score": 0.7765132466475201,
+            "support": 2493.0
+          }
+        },
+        "confusion_matrix": [
+          [
+            0,
+            0,
+            31
+          ],
+          [
+            0,
+            0,
+            351
+          ],
+          [
+            0,
+            0,
+            2111
+          ]
+        ]
+      }
+    },
+    "balanced_logistic": {
+      "validation_macro_f1": 0.2801944259393545,
+      "test": {
+        "accuracy": 0.4267950260730044,
+        "balanced_accuracy": 0.4608526041878222,
+        "macro_f1": 0.28882041074108605,
+        "log_loss": 1.0175304637327733,
+        "per_class": {
+          "Fatal injury": {
+            "precision": 0.02538787023977433,
+            "recall": 0.5806451612903226,
+            "f1-score": 0.04864864864864865,
+            "support": 31.0
+          },
+          "Serious Injury": {
+            "precision": 0.17456021650879566,
+            "recall": 0.36752136752136755,
+            "f1-score": 0.23669724770642203,
+            "support": 351.0
+          },
+          "Slight Injury": {
+            "precision": 0.877511961722488,
+            "recall": 0.43439128375177644,
+            "f1-score": 0.5811153358681875,
+            "support": 2111.0
+          },
+          "accuracy": 0.4267950260730044,
+          "macro avg": {
+            "precision": 0.35915334949035266,
+            "recall": 0.4608526041878222,
+            "f1-score": 0.28882041074108605,
+            "support": 2493.0
+          },
+          "weighted avg": {
+            "precision": 0.7679444088119505,
+            "recall": 0.4267950260730044,
+            "f1-score": 0.5260021323990398,
+            "support": 2493.0
+          }
+        },
+        "confusion_matrix": [
+          [
+            18,
+            5,
+            8
+          ],
+          [
+            102,
+            129,
+            120
+          ],
+          [
+            589,
+            605,
+            917
+          ]
+        ]
+      }
+    },
+    "balanced_tree": {
+      "validation_macro_f1": 0.3386258537684405,
+      "test": {
+        "accuracy": 0.5282791817087846,
+        "balanced_accuracy": 0.5194282786465058,
+        "macro_f1": 0.33101901528168903,
+        "log_loss": 1.1236478565874308,
+        "per_class": {
+          "Fatal injury": {
+            "precision": 0.03358778625954199,
+            "recall": 0.7096774193548387,
+            "f1-score": 0.0641399416909621,
+            "support": 31.0
+          },
+          "Serious Injury": {
+            "precision": 0.21153846153846154,
+            "recall": 0.28205128205128205,
+            "f1-score": 0.24175824175824176,
+            "support": 351.0
+          },
+          "Slight Injury": {
+            "precision": 0.872992700729927,
+            "recall": 0.5665561345333965,
+            "f1-score": 0.6871588623958632,
+            "support": 2111.0
+          },
+          "accuracy": 0.5282791817087846,
+          "macro avg": {
+            "precision": 0.37270631617597677,
+            "recall": 0.5194282786465058,
+            "f1-score": 0.33101901528168903,
+            "support": 2493.0
+          },
+          "weighted avg": {
+            "precision": 0.7694259176152914,
+            "recall": 0.5282791817087846,
+            "f1-score": 0.6167019011501123,
+            "support": 2493.0
+          }
+        },
+        "confusion_matrix": [
+          [
+            22,
+            3,
+            6
+          ],
+          [
+            84,
+            99,
+            168
+          ],
+          [
+            549,
+            366,
+            1196
+          ]
+        ]
+      }
+    },
+    "balanced_forest": {
+      "validation_macro_f1": 0.40814951027340407,
+      "test": {
+        "accuracy": 0.731247492980345,
+        "balanced_accuracy": 0.5120798733722334,
+        "macro_f1": 0.441686909330062,
+        "log_loss": 0.7997626034494086,
+        "per_class": {
+          "Fatal injury": {
+            "precision": 0.11,
+            "recall": 0.3548387096774194,
+            "f1-score": 0.16793893129770993,
+            "support": 31.0
+          },
+          "Serious Injury": {
+            "precision": 0.27309236947791166,
+            "recall": 0.38746438746438744,
+            "f1-score": 0.32037691401649,
+            "support": 351.0
+          },
+          "Slight Injury": {
+            "precision": 0.8844327176781003,
+            "recall": 0.7939365229748934,
+            "f1-score": 0.836744882675986,
+            "support": 2111.0
+          },
+          "accuracy": 0.731247492980345,
+          "macro avg": {
+            "precision": 0.42250836238533734,
+            "recall": 0.5120798733722334,
+            "f1-score": 0.441686909330062,
+            "support": 2493.0
+          },
+          "weighted avg": {
+            "precision": 0.7887295983574877,
+            "recall": 0.731247492980345,
+            "f1-score": 0.7557267753786697,
+            "support": 2493.0
+          }
+        },
+        "confusion_matrix": [
+          [
+            11,
+            6,
+            14
+          ],
+          [
+            10,
+            136,
+            205
+          ],
+          [
+            79,
+            356,
+            1676
+          ]
+        ]
+      }
+    }
+  },
+  "selected_macro_f1_bootstrap_95_ci": [
+    0.4120976095783161,
+    0.47364227959410204
+  ],
+  "bootstrap_replicates": 300,
+  "validation_permutation_importance": [
+    {
+      "feature": "Number_of_vehicles_involved",
+      "mean": 0.04491635543826218,
+      "std": 0.007836907799894714
+    },
+    {
+      "feature": "Types_of_Junction",
+      "mean": 0.023923836411364474,
+      "std": 0.010456097118616435
+    },
+    {
+      "feature": "Hour",
+      "mean": 0.014672481303569879,
+      "std": 0.01387765152472704
+    },
+    {
+      "feature": "Weather_conditions",
+      "mean": 0.012873763700240001,
+      "std": 0.007238510384300645
+    },
+    {
+      "feature": "Road_surface_conditions",
+      "mean": 0.011265779930122607,
+      "std": 0.0072288840460208855
+    },
+    {
+      "feature": "Road_surface_type",
+      "mean": 0.0055773003218138745,
+      "std": 0.005121809691967298
+    },
+    {
+      "feature": "Area_accident_occured",
+      "mean": -0.0012055769636923064,
+      "std": 0.0061149784728161075
+    },
+    {
+      "feature": "Light_conditions",
+      "mean": -0.003545843274463098,
+      "std": 0.003313712150494783
+    },
+    {
+      "feature": "Type_of_vehicle",
+      "mean": -0.0035760064147542237,
+      "std": 0.0063308761401150715
+    },
+    {
+      "feature": "Day_of_week",
+      "mean": -0.005896669530094184,
+      "std": 0.012904512516311787
+    }
+  ],
+  "runtime": {
+    "python": "3.11.6",
+    "sklearn": "1.6.1",
+    "pandas": "2.2.3",
+    "numpy": "1.26.4"
+  },
+  "limitations": [
+    "Retrospective classification; not pre-crash forecasting or emergency triage.",
+    "One grouped holdout; not temporal, geographic or prospective validation.",
+    "Fatal cases are scarce; all class recalls must be considered.",
+    "Model probabilities are uncalibrated scores, not reliable individual risk estimates.",
+    "Source mirror licensing and original data provenance require review before redistribution or production use."
+  ]
+}

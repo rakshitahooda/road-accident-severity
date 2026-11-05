@@ -1,0 +1,110 @@
+{
+  "features": [
+    "Hour",
+    "Number_of_vehicles_involved",
+    "Day_of_week",
+    "Area_accident_occured",
+    "Types_of_Junction",
+    "Road_surface_type",
+    "Road_surface_conditions",
+    "Light_conditions",
+    "Weather_conditions",
+    "Type_of_vehicle"
+  ],
+  "numeric": {
+    "Hour": {
+      "min": 0,
+      "max": 23
+    },
+    "Number_of_vehicles_involved": {
+      "min": 1,
+      "max": 20
+    }
+  },
+  "categories": {
+    "Day_of_week": [
+      "Friday",
+      "Monday",
+      "Saturday",
+      "Sunday",
+      "Thursday",
+      "Tuesday",
+      "Wednesday"
+    ],
+    "Area_accident_occured": [
+      "  Market areas",
+      "  Recreational areas",
+      " Church areas",
+      " Hospital areas",
+      " Industrial areas",
+      " Outside rural areas",
+      "Office areas",
+      "Other",
+      "Recreational areas",
+      "Residential areas",
+      "Rural village areas",
+      "Rural village areasOffice areas",
+      "School areas",
+      "Unknown"
+    ],
+    "Types_of_Junction": [
+      "Crossing",
+      "No junction",
+      "O Shape",
+      "Other",
+      "T Shape",
+      "Unknown",
+      "X Shape",
+      "Y Shape"
+    ],
+    "Road_surface_type": [
+      "Asphalt roads",
+      "Asphalt roads with some distress",
+      "Earth roads",
+      "Gravel roads",
+      "Other"
+    ],
+    "Road_surface_conditions": [
+      "Dry",
+      "Flood over 3cm. deep",
+      "Snow",
+      "Wet or damp"
+    ],
+    "Light_conditions": [
+      "Darkness - lights lit",
+      "Darkness - lights unlit",
+      "Darkness - no lighting",
+      "Daylight"
+    ],
+    "Weather_conditions": [
+      "Cloudy",
+      "Fog or mist",
+      "Normal",
+      "Other",
+      "Raining",
+      "Raining and Windy",
+      "Snow",
+      "Unknown",
+      "Windy"
+    ],
+    "Type_of_vehicle": [
+      "Automobile",
+      "Bajaj",
+      "Bicycle",
+      "Long lorry",
+      "Lorry (11?40Q)",
+      "Lorry (41?100Q)",
+      "Motorcycle",
+      "Other",
+      "Pick up upto 10Q",
+      "Public (12 seats)",
+      "Public (13?45 seats)",
+      "Public (> 45 seats)",
+      "Ridden horse",
+      "Special vehicle",
+      "Stationwagen",
+      "Taxi",
+      "Turbo"
+    ]
+  }
+}

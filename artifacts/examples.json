@@ -1,0 +1,50 @@
+[
+  {
+    "Hour": 17,
+    "Number_of_vehicles_involved": 2,
+    "Day_of_week": "Monday",
+    "Area_accident_occured": "  Recreational areas",
+    "Types_of_Junction": "No junction",
+    "Road_surface_type": "Asphalt roads",
+    "Road_surface_conditions": "Dry",
+    "Light_conditions": "Daylight",
+    "Weather_conditions": "Normal",
+    "Type_of_vehicle": "Lorry (41?100Q)"
+  },
+  {
+    "Hour": 1,
+    "Number_of_vehicles_involved": 2,
+    "Day_of_week": "Sunday",
+    "Area_accident_occured": "Office areas",
+    "Types_of_Junction": "Y Shape",
+    "Road_surface_type": "Earth roads",
+    "Road_surface_conditions": "Dry",
+    "Light_conditions": "Darkness - lights lit",
+    "Weather_conditions": "Normal",
+    "Type_of_vehicle": "Public (> 45 seats)"
+  },
+  {
+    "Hour": 14,
+    "Number_of_vehicles_involved": 1,
+    "Day_of_week": "Friday",
+    "Area_accident_occured": null,
+    "Types_of_Junction": "Y Shape",
+    "Road_surface_type": null,
+    "Road_surface_conditions": "Dry",
+    "Light_conditions": "Daylight",
+    "Weather_conditions": "Normal",
+    "Type_of_vehicle": null
+  },
+  {
+    "Hour": 17,
+    "Number_of_vehicles_involved": 1,
+    "Day_of_week": "Wednesday",
+    "Area_accident_occured": "Residential areas",
+    "Types_of_Junction": "Crossing",
+    "Road_surface_type": null,
+    "Road_surface_conditions": "Dry",
+    "Light_conditions": "Daylight",
+    "Weather_conditions": "Normal",
+    "Type_of_vehicle": "Automobile"
+  }
+]

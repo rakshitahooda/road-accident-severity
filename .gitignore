@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.pyc
+data/*.csv
+artifacts/model.joblib
+artifacts/test_predictions.csv
+artifacts/split_indices.json
+training.log
