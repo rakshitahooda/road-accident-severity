@@ -38,6 +38,34 @@ def evaluate(y, prediction, probabilities, labels):
             "confusion_matrix": confusion_matrix(y, prediction, labels=labels).tolist()}
 
 
+def profile_cluster_bootstrap_macro_f1(y, prediction, groups, labels, n_resamples=300, seed=SEED):
+    """Resample complete identical-feature-profile groups for a descriptive sensitivity interval."""
+    truth = np.asarray(y)
+    predicted = np.asarray(prediction)
+    group_values = np.asarray(groups)
+    if len(truth) == 0 or len(truth) != len(predicted) or len(truth) != len(group_values):
+        raise ValueError("y, prediction and groups must have the same nonzero length")
+    if not labels or n_resamples < 1:
+        raise ValueError("labels and at least one bootstrap resample are required")
+    group_codes, unique_groups = pd.factorize(group_values, sort=False)
+    if (group_codes < 0).any():
+        raise ValueError("groups must not contain missing values")
+    rows_by_group = [np.flatnonzero(group_codes == code) for code in range(len(unique_groups))]
+    rng = np.random.default_rng(seed)
+    scores = np.empty(n_resamples)
+    missing_class_resamples = 0
+    expected_labels = set(labels)
+    for replicate in range(n_resamples):
+        sampled_groups = rng.integers(0, len(rows_by_group), size=len(rows_by_group))
+        sampled_rows = np.concatenate([rows_by_group[index] for index in sampled_groups])
+        missing_class_resamples += int(not expected_labels.issubset(set(truth[sampled_rows])))
+        scores[replicate] = f1_score(truth[sampled_rows], predicted[sampled_rows], labels=labels,
+                                     average="macro", zero_division=0)
+    return {"interval": np.quantile(scores, [.025, .975]).tolist(),
+            "replicates": int(n_resamples), "replicates_missing_class": int(missing_class_resamples),
+            "test_profile_groups": int(len(unique_groups))}
+
+
 def run(path, output):
     output.mkdir(parents=True, exist_ok=True)
     actual = hashlib.sha256(path.read_bytes()).hexdigest()
@@ -89,6 +117,8 @@ def run(path, output):
         idx = np.concatenate([rng.choice(rows, len(rows), replace=True) for rows in by_class])
         bootstrap.append(f1_score(truth[idx], pred[idx], labels=labels, average="macro", zero_division=0))
     interval = np.quantile(bootstrap, [.025, .975]).tolist()
+    profile_bootstrap = profile_cluster_bootstrap_macro_f1(
+        truth, pred, groups.iloc[test].to_numpy(), labels, n_resamples=300, seed=SEED)
     schema = {"features": FEATURES, "numeric": {"Hour": {"min": 0, "max": 23}, "Number_of_vehicles_involved": {"min": 1, "max": 20}},
               "categories": {c: sorted(X.iloc[train][c].dropna().unique().tolist()) for c in CATEGORICAL}}
     # Permutation importance is computed on validation, not used for model selection.
@@ -98,7 +128,9 @@ def run(path, output):
     report = {"selected": selected_name, "selection_metric": "validation macro-F1", "seed": SEED, "labels": labels,
               "dataset": {"source": SOURCE, "sha256": actual, "raw_rows": len(raw), "unique_rows": len(data), "removed_duplicates": len(raw)-len(data), "selected_feature_groups": int(groups.nunique())},
               "split": {"method": "GroupShuffleSplit on identical selected-feature profiles", "rows": {"train": len(train), "validation": len(validation), "test": len(test)}, "class_counts": counts, "profile_overlap": 0},
-              "models": reports, "selected_macro_f1_bootstrap_95_ci": interval, "bootstrap_replicates": 300,
+              "models": reports, "selected_macro_f1_bootstrap_95_ci": interval,
+              "selected_macro_f1_profile_cluster_bootstrap_95_ci": profile_bootstrap["interval"],
+              "bootstrap_replicates": 300, "profile_cluster_bootstrap": profile_bootstrap,
               "validation_permutation_importance": importance,
               "runtime": {"python": platform.python_version(), "sklearn": sklearn.__version__, "pandas": pd.__version__, "numpy": np.__version__},
               "limitations": ["Retrospective classification; not pre-crash forecasting or emergency triage.", "One grouped holdout; not temporal, geographic or prospective validation.", "Fatal cases are scarce; all class recalls must be considered.", "Model probabilities are uncalibrated scores, not reliable individual risk estimates.", "Source mirror licensing and original data provenance require review before redistribution or production use."]}
@@ -123,7 +155,10 @@ def run(path, output):
     axes[1].set(xlim=(0, 1), xlabel="Macro-F1", title="Model comparison — no test tuning")
     fig.savefig(output / "evaluation.png", dpi=160)
     plt.close(fig)
-    print(json.dumps({"selected": selected_name, "test_macro_f1": reports[selected_name]["test"]["macro_f1"], "bootstrap_95_ci": interval, "split": report["split"]}, indent=2))
+    print(json.dumps({"selected": selected_name, "test_macro_f1": reports[selected_name]["test"]["macro_f1"],
+                      "stratified_row_bootstrap_95_ci": interval,
+                      "profile_cluster_bootstrap_95_ci": profile_bootstrap["interval"],
+                      "profile_cluster_bootstrap": profile_bootstrap, "split": report["split"]}, indent=2))
     return report
 
 

@@ -1,5 +1,12 @@
 # Validation record
 
+Rechecked locally on 2026-11-07 after adding profile-cluster bootstrap evaluation:
+
+- Reproducible training completed against the reviewed dataset checksum; the balanced random forest remained selected, with test macro-F1 0.442. The new 300-resample profile-cluster sensitivity interval was 0.411–0.473 over 2,258 test profiles; no resample omitted a class.
+- 20 pytest checks passed, including the new cluster-bootstrap reproducibility and input-validation checks.
+- Ruff checks passed for `roadlab` and `tests`.
+- Browser/UI smoke checks were not rerun for this change; the results below are the earlier 2026-11-05 run.
+
 Executed locally on 2026-11-05 using Python 3.11, in a newly created environment with requirements-dev.txt:
 
 - Dataset checksum matched the reviewed 12,316-row snapshot; all four candidates were retrained.

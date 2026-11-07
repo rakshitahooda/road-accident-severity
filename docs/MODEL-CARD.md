@@ -12,7 +12,7 @@ Ten fields: hour, vehicles involved, day, area type, junction, road surface type
 All learned imputation/encoding/scaling occurs within a training-fitted Pipeline. Three fixed balanced models compete on validation macro-F1; majority is a reference, not a production candidate. The selected model is not refitted on validation, so the artifact is exactly the model evaluated on the held-out test set. There is no tuning after test inspection. See `artifacts/metrics.json` for full metrics, runtime versions and class counts.
 
 ## Findings
-Balanced random forest: test macro-F1 0.442, accuracy 0.731, fatal recall 0.355 (11 of 31 fatal test cases), serious recall 0.387, slight recall 0.794. Stratified test bootstrap interval for macro-F1 is 0.412–0.474 over 300 resamples. It preserves observed class counts and conditions on this particular trained model/test set; it does not estimate uncertainty over new datasets, retraining or selection.
+Balanced random forest: test macro-F1 0.442, accuracy 0.731, fatal recall 0.355 (11 of 31 fatal test cases), serious recall 0.387, slight recall 0.794. The 300-resample stratified row-bootstrap 95% interval for macro-F1 is 0.412–0.474. A second 300-resample bootstrap of whole identical-feature-profile groups gives 0.411–0.473; it sampled 2,258 test groups, and none of its replicates omitted a class. Both intervals are descriptive and conditional on this fixed model and holdout. The group bootstrap addresses dependence among rows with identical input profiles only; profiles are not incident identifiers, and neither interval estimates uncertainty over new datasets, retraining or model selection.
 
 ## Important limitations
 - Scarce fatal cases mean unstable rare-class estimates and many missed fatal outcomes.
@@ -26,4 +26,4 @@ Balanced random forest: test macro-F1 0.442, accuracy 0.731, fatal recall 0.355 
 ## Next research steps
 Obtain a licensed, independently documented dataset with incident identifiers, actual dates and geographic holdouts; collect representative validation data; compare calibrated/ordinal models and cost-sensitive objectives; investigate errors and fairness with a clear, ethical use case. None of these are claimed complete.
 
-The stratified row-bootstrap interval is descriptive and conditional on the fixed holdout. It does not model dependence between rows sharing feature profiles; a grouped bootstrap or repeated grouped experiment is an appropriate follow-up.
+The profile-cluster bootstrap is a sensitivity analysis, not incident-level inference: the source has no incident identifiers, so distinct profiles may still belong to the same event. Obtaining a licensed dataset with incident IDs and dates, followed by incident-level and temporal/geographic validation, remains an appropriate follow-up.

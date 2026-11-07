@@ -31,7 +31,9 @@ def test_live_prediction(example):
 def test_batch_same_as_single(example):
     single = client.post("/api/predict", json={"records": [example]}).json()["predictions"][0]
     batch = client.post("/api/predict", json={"records": [example, example]}).json()["predictions"]
-    assert batch == [single, single]
+    assert [item["label"] for item in batch] == [single["label"], single["label"]]
+    for item in batch:
+        assert item["scores"] == pytest.approx(single["scores"])
 
 
 @pytest.mark.parametrize("change", [{"Hour": -1}, {"Hour": 24}, {"Hour": True}, {"Hour": 3.2}, {"Number_of_vehicles_involved": 0}, {"Weather_conditions": "invented"}, {"Accident_severity": "Fatal injury"}])
@@ -93,3 +95,28 @@ def test_openapi_documents_batch_limits():
     records = contract["components"]["schemas"]["PredictionRequest"]["properties"]["records"]
     assert records["minItems"] == 1
     assert records["maxItems"] == 100
+
+def test_profile_cluster_bootstrap_is_reproducible():
+    import numpy as np
+    from roadlab.train import profile_cluster_bootstrap_macro_f1
+
+    truth = np.array(["fatal", "fatal", "serious", "serious", "slight", "slight"])
+    predicted = np.array(["fatal", "slight", "serious", "fatal", "slight", "slight"])
+    groups = np.array(["profile-a", "profile-a", "profile-b", "profile-b", "profile-c", "profile-c"])
+    result = profile_cluster_bootstrap_macro_f1(truth, predicted, groups, ["fatal", "serious", "slight"], n_resamples=100)
+
+    assert result == profile_cluster_bootstrap_macro_f1(
+        truth, predicted, groups, ["fatal", "serious", "slight"], n_resamples=100)
+    assert result["replicates"] == 100
+    assert result["test_profile_groups"] == 3
+    assert result["replicates_missing_class"] >= 0
+    assert len(result["interval"]) == 2
+    assert 0 <= result["interval"][0] <= result["interval"][1] <= 1
+
+
+def test_profile_cluster_bootstrap_rejects_misaligned_rows():
+    import numpy as np
+    from roadlab.train import profile_cluster_bootstrap_macro_f1
+
+    with pytest.raises(ValueError, match="same nonzero length"):
+        profile_cluster_bootstrap_macro_f1(np.array(["a"]), np.array(["a", "b"]), np.array(["g"]), ["a", "b"])

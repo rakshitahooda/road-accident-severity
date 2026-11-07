@@ -283,7 +283,20 @@
     0.4120976095783161,
     0.47364227959410204
   ],
+  "selected_macro_f1_profile_cluster_bootstrap_95_ci": [
+    0.4108623726751615,
+    0.4729327934900483
+  ],
   "bootstrap_replicates": 300,
+  "profile_cluster_bootstrap": {
+    "interval": [
+      0.4108623726751615,
+      0.4729327934900483
+    ],
+    "replicates": 300,
+    "replicates_missing_class": 0,
+    "test_profile_groups": 2258
+  },
   "validation_permutation_importance": [
     {
       "feature": "Number_of_vehicles_involved",
