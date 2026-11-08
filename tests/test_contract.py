@@ -96,6 +96,16 @@ def test_openapi_documents_batch_limits():
     assert records["minItems"] == 1
     assert records["maxItems"] == 100
 
+
+def test_metadata_reports_both_bootstrap_intervals():
+    metrics = client.get("/api/metadata").json()["metrics"]
+    profile = metrics["profile_cluster_bootstrap"]
+
+    assert len(metrics["selected_macro_f1_bootstrap_95_ci"]) == 2
+    assert profile["interval"] == metrics["selected_macro_f1_profile_cluster_bootstrap_95_ci"]
+    assert profile["replicates"] == metrics["bootstrap_replicates"] == 300
+    assert profile["test_profile_groups"] == 2258
+
 def test_profile_cluster_bootstrap_is_reproducible():
     import numpy as np
     from roadlab.train import profile_cluster_bootstrap_macro_f1

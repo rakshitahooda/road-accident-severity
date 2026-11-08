@@ -21,6 +21,13 @@ with sync_playwright() as p:
     page.locator('[data-tab=evaluation]').click()
     assert page.locator('#evaluation').is_visible()
     assert page.locator('#comparison tr').count() == 4
+    assert page.locator('#interval .interval-card').count() == 2
+    interval_cards = page.locator('#interval .interval-card')
+    assert 'stratified row bootstrap' in interval_cards.nth(0).inner_text().lower()
+    assert '300 resamples' in interval_cards.nth(0).inner_text()
+    assert 'profile-cluster sensitivity' in interval_cards.nth(1).inner_text().lower()
+    assert '2,258 test profiles' in interval_cards.nth(1).inner_text()
+    assert 'not incident IDs' in page.locator('#interval-note').inner_text()
     page.screenshot(path='docs/evidence.png', full_page=True)
     page.locator('[data-tab=method]').click()
     assert page.locator('#method').is_visible()
