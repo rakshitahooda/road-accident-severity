@@ -12,6 +12,22 @@ with sync_playwright() as p:
     page.on("pageerror", lambda error: errors.append(str(error)))
     page.goto("http://127.0.0.1:8000")
     page.wait_for_function("document.querySelector('#status').textContent.includes('Model ready')")
+    tabs = page.get_by_role('tab')
+    assert tabs.count() == 3
+    assert tabs.nth(0).get_attribute('aria-selected') == 'true'
+    tabs.nth(0).focus()
+    page.keyboard.press('ArrowRight')
+    assert tabs.nth(1).get_attribute('aria-selected') == 'true'
+    assert page.locator('#evaluation').is_visible()
+    assert page.evaluate('document.activeElement.id') == 'tab-evaluation'
+    page.keyboard.press('End')
+    assert tabs.nth(2).get_attribute('aria-selected') == 'true'
+    assert page.locator('#method').is_visible()
+    page.keyboard.press('ArrowLeft')
+    assert tabs.nth(1).get_attribute('aria-selected') == 'true'
+    page.keyboard.press('Home')
+    assert tabs.nth(0).get_attribute('aria-selected') == 'true'
+    assert page.locator('#experiment').is_visible()
     with page.expect_response("**/api/predict") as response:
         page.locator('#run').click()
     assert response.value.ok
