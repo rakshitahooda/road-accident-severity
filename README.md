@@ -9,7 +9,7 @@ A reproducible machine-learning experiment with a working local web interface an
 - A shared feature contract for training and inference; ten interpretable scene/vehicle inputs rather than casualty outcomes.
 - Grouped train/validation/test splits keep identical input profiles together. Learned preprocessing is fitted only on training data.
 - Majority baseline and three balanced classifiers, selected by validation macro-F1, not test accuracy.
-- Per-class recall, confusion matrices, balanced accuracy, validation permutation importance, and row- and profile-cluster bootstrap intervals.
+- Per-class recall, confusion matrices, balanced accuracy, validation permutation importance and a validation-only fatal-miss audit; row- and profile-cluster bootstrap intervals.
 - Real local single/batch inference, strict input validation, OpenAPI documentation, responsive UI, automated tests and GitHub Actions.
 - Dataset hash checks, exact dependency versions, saved experiment metadata, model card and reproducible training command.
 
@@ -42,7 +42,7 @@ One fixed grouped experiment selected a balanced random forest:
 | Balanced decision tree | 0.339 | 0.331 | 52.8% |
 | Balanced random forest | 0.408 | 0.442 | 73.1% |
 
-The selected model's test recall is **35.5% fatal**, **38.7% serious** and **79.4% slight**. It misses most fatal cases. Its macro-F1 95% intervals are **0.412–0.474** under stratified row resampling and **0.411–0.473** under a profile-cluster sensitivity bootstrap (300 resamples of 2,258 test profiles; none omitted a class). The clusters are identical input profiles, not known incident IDs, so this still cannot quantify incident-level, temporal/geographic or model-selection uncertainty. The majority baseline's apparently strong accuracy is exactly why accuracy alone is misleading.
+The selected model's test recall is **35.5% fatal**, **38.7% serious** and **79.4% slight**. It misses most fatal cases. Its macro-F1 95% intervals are **0.412–0.474** under stratified row resampling and **0.411–0.473** under a profile-cluster sensitivity bootstrap (300 resamples of 2,258 test profiles; none omitted a class). The clusters are identical input profiles, not known incident IDs, so this still cannot quantify incident-level, temporal/geographic or model-selection uncertainty. The majority baseline's apparently strong accuracy is exactly why accuracy alone is misleading. The selected model correctly classified **3 of 33 fatal-labelled validation rows** and missed 30 (19 predicted slight, 11 serious). Because this same split selected the model, the audit is exploratory—not an independent performance estimate—and exposes only aggregate counts.
 
 These results are not directly comparable with the earlier study implementation: the input set, grouping rule and holdout changed. The engineering upgrade is not a claim that accuracy universally improved.
 

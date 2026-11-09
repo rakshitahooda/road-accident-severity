@@ -105,6 +105,50 @@ def test_metadata_reports_both_bootstrap_intervals():
     assert profile["interval"] == metrics["selected_macro_f1_profile_cluster_bootstrap_95_ci"]
     assert profile["replicates"] == metrics["bootstrap_replicates"] == 300
     assert profile["test_profile_groups"] == 2258
+    audit = metrics["validation_fatal_error_analysis"]
+    assert audit["split"] == "validation"
+    assert audit["fatal_rows"] == 33
+    assert audit["correctly_classified"] + audit["missed"] == audit["fatal_rows"]
+    assert sum(item["count"] for item in audit["missed_predictions"]) == audit["missed"]
+    assert "not an independent performance estimate" in audit["interpretation"]
+
+def test_validation_fatal_error_analysis_uses_aggregate_counts():
+    from roadlab.train import fatal_error_analysis
+
+    result = fatal_error_analysis(
+        ["Fatal injury", "Fatal injury", "Fatal injury", "Serious Injury", "Slight Injury"],
+        ["Fatal injury", "Serious Injury", "Slight Injury", "Fatal injury", "Slight Injury"],
+        ["Fatal injury", "Serious Injury", "Slight Injury"],
+    )
+
+    assert result["split"] == "validation"
+    assert result["fatal_rows"] == 3
+    assert result["correctly_classified"] == 1
+    assert result["missed"] == 2
+    assert result["recall"] == pytest.approx(1 / 3)
+    assert result["missed_predictions"] == [
+        {"label": "Serious Injury", "count": 1},
+        {"label": "Slight Injury", "count": 1},
+    ]
+    assert "not an independent performance estimate" in result["interpretation"]
+
+
+def test_validation_fatal_error_analysis_handles_no_fatal_rows():
+    from roadlab.train import fatal_error_analysis
+
+    result = fatal_error_analysis(["Slight Injury"], ["Slight Injury"], ["Fatal injury", "Slight Injury"])
+
+    assert result["fatal_rows"] == 0
+    assert result["recall"] is None
+    assert result["missed_predictions"] == []
+
+
+def test_validation_fatal_error_analysis_rejects_misaligned_rows():
+    from roadlab.train import fatal_error_analysis
+
+    with pytest.raises(ValueError, match="aligned"):
+        fatal_error_analysis(["Fatal injury"], [], ["Fatal injury", "Slight Injury"])
+
 
 def test_profile_cluster_bootstrap_is_reproducible():
     import numpy as np

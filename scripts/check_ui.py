@@ -37,6 +37,9 @@ with sync_playwright() as p:
     page.locator('[data-tab=evaluation]').click()
     assert page.locator('#evaluation').is_visible()
     assert page.locator('#comparison tr').count() == 4
+    assert '3 of 33 fatal-labelled validation rows' in page.locator('#fatal-audit-summary').inner_text()
+    assert page.locator('#fatal-audit-breakdown tr').count() == 2
+    assert 'exploratory' in page.locator('#fatal-audit-note').inner_text().lower()
     assert page.locator('#interval .interval-card').count() == 2
     interval_cards = page.locator('#interval .interval-card')
     assert 'stratified row bootstrap' in interval_cards.nth(0).inner_text().lower()

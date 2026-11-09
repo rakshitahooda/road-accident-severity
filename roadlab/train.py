@@ -38,6 +38,40 @@ def evaluate(y, prediction, probabilities, labels):
             "confusion_matrix": confusion_matrix(y, prediction, labels=labels).tolist()}
 
 
+def fatal_error_analysis(y, prediction, labels, fatal_label="Fatal injury"):
+    """Summarize fatal-labelled validation rows without exporting row-level examples."""
+    truth = np.asarray(y)
+    predicted = np.asarray(prediction)
+    labels = list(labels)
+    if truth.ndim != 1 or predicted.ndim != 1 or len(truth) != len(predicted):
+        raise ValueError("y and prediction must be aligned one-dimensional arrays")
+    if fatal_label not in labels:
+        raise ValueError("fatal_label must be present in labels")
+
+    fatal_rows = truth == fatal_label
+    total = int(fatal_rows.sum())
+    correctly_classified = int(np.sum(fatal_rows & (predicted == fatal_label)))
+    missed_predictions = [
+        {"label": label, "count": int(np.sum(fatal_rows & (predicted == label)))}
+        for label in labels if label != fatal_label and np.any(fatal_rows & (predicted == label))
+    ]
+    missed_predictions.sort(key=lambda item: (-item["count"], item["label"]))
+    missed = total - correctly_classified
+    return {
+        "split": "validation",
+        "fatal_label": fatal_label,
+        "fatal_rows": total,
+        "correctly_classified": correctly_classified,
+        "missed": missed,
+        "recall": correctly_classified / total if total else None,
+        "missed_predictions": missed_predictions,
+        "interpretation": (
+            "The validation split was used to select the model; this error review is exploratory, "
+            "not an independent performance estimate. Only aggregate counts are reported."
+        ),
+    }
+
+
 def profile_cluster_bootstrap_macro_f1(y, prediction, groups, labels, n_resamples=300, seed=SEED):
     """Resample complete identical-feature-profile groups for a descriptive sensitivity interval."""
     truth = np.asarray(y)
@@ -106,6 +140,8 @@ def run(path, output):
     selected_name = max((n for n in models if n != "majority"), key=validation_scores.get)
     selected = models[selected_name]
     labels = list(selected.classes_)
+    validation_fatal_analysis = fatal_error_analysis(
+        y.iloc[validation].to_numpy(), selected.predict(X.iloc[validation]), labels)
     # A single final holdout evaluation after all models and selection rules are fixed.
     reports = {name: {"validation_macro_f1": validation_scores[name], "test": evaluate(y.iloc[test], m.predict(X.iloc[test]), m.predict_proba(X.iloc[test]), labels)} for name, m in models.items()}
     pred, truth = selected.predict(X.iloc[test]), y.iloc[test].to_numpy()
@@ -128,7 +164,8 @@ def run(path, output):
     report = {"selected": selected_name, "selection_metric": "validation macro-F1", "seed": SEED, "labels": labels,
               "dataset": {"source": SOURCE, "sha256": actual, "raw_rows": len(raw), "unique_rows": len(data), "removed_duplicates": len(raw)-len(data), "selected_feature_groups": int(groups.nunique())},
               "split": {"method": "GroupShuffleSplit on identical selected-feature profiles", "rows": {"train": len(train), "validation": len(validation), "test": len(test)}, "class_counts": counts, "profile_overlap": 0},
-              "models": reports, "selected_macro_f1_bootstrap_95_ci": interval,
+              "models": reports, "validation_fatal_error_analysis": validation_fatal_analysis,
+              "selected_macro_f1_bootstrap_95_ci": interval,
               "selected_macro_f1_profile_cluster_bootstrap_95_ci": profile_bootstrap["interval"],
               "bootstrap_replicates": 300, "profile_cluster_bootstrap": profile_bootstrap,
               "validation_permutation_importance": importance,
@@ -158,7 +195,9 @@ def run(path, output):
     print(json.dumps({"selected": selected_name, "test_macro_f1": reports[selected_name]["test"]["macro_f1"],
                       "stratified_row_bootstrap_95_ci": interval,
                       "profile_cluster_bootstrap_95_ci": profile_bootstrap["interval"],
-                      "profile_cluster_bootstrap": profile_bootstrap, "split": report["split"]}, indent=2))
+                      "profile_cluster_bootstrap": profile_bootstrap,
+                      "validation_fatal_error_analysis": validation_fatal_analysis,
+                      "split": report["split"]}, indent=2))
     return report
 
 
