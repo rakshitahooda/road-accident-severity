@@ -112,6 +112,49 @@ def test_metadata_reports_both_bootstrap_intervals():
     assert sum(item["count"] for item in audit["missed_predictions"]) == audit["missed"]
     assert "not an independent performance estimate" in audit["interpretation"]
 
+def test_development_grouped_cv_metadata_excludes_test_holdout():
+    metrics = json.loads((ROOT / "artifacts/metrics.json").read_text())
+    cv = metrics["development_grouped_cross_validation"]
+    split = metrics["split"]
+
+    assert cv["method"] == "StratifiedGroupKFold"
+    assert cv["n_splits"] == 5
+    assert cv["development_rows"] == split["rows"]["train"] + split["rows"]["validation"]
+    assert "final test holdout is excluded" in cv["scope"].lower()
+    assert len(cv["folds"]) == 5
+    assert all(fold["group_overlap"] == 0 and fold["validation_fatal_rows"] > 0 for fold in cv["folds"])
+    development_fatal_rows = (
+        split["class_counts"]["train"]["Fatal injury"]
+        + split["class_counts"]["validation"]["Fatal injury"]
+    )
+    assert set(cv["models"]) == {"majority", "balanced_logistic", "balanced_tree", "balanced_forest"}
+    for model in cv["models"].values():
+        assert model["oof_fatal_rows"] == development_fatal_rows
+        assert model["oof_fatal_correct"] <= model["oof_fatal_rows"]
+        assert 0 <= model["oof_fatal_recall"] <= 1
+        assert 0 <= model["oof_macro_f1"] <= 1
+        assert len(model["fold_fatal_recall"]) == 5
+
+
+def test_grouped_cv_splits_keep_feature_profiles_together():
+    import numpy as np
+    from roadlab.train import grouped_cv_splits
+
+    groups = np.repeat(np.arange(30), 2)
+    y = np.repeat(np.repeat(["Fatal injury", "Serious Injury", "Slight Injury"], 10), 2)
+    validation_counts = np.zeros(len(y), dtype=int)
+    classes = set(y)
+
+    folds = grouped_cv_splits(y, groups, n_splits=5)
+    assert len(folds) == 5
+    for train_rows, validation_rows in folds:
+        assert set(groups[train_rows]).isdisjoint(groups[validation_rows])
+        assert set(y[train_rows]) == classes
+        assert set(y[validation_rows]) == classes
+        validation_counts[validation_rows] += 1
+    assert np.all(validation_counts == 1)
+
+
 def test_validation_fatal_error_analysis_uses_aggregate_counts():
     from roadlab.train import fatal_error_analysis
 

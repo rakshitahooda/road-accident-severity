@@ -40,6 +40,11 @@ with sync_playwright() as p:
     assert '3 of 33 fatal-labelled validation rows' in page.locator('#fatal-audit-summary').inner_text()
     assert page.locator('#fatal-audit-breakdown tr').count() == 2
     assert 'exploratory' in page.locator('#fatal-audit-note').inner_text().lower()
+    assert '5-fold StratifiedGroupKFold' in page.locator('#cv-summary').inner_text()
+    assert 'fatal rows per fold' in page.locator('#cv-summary').inner_text()
+    assert 'final test holdout is excluded' in page.locator('#cv-note').inner_text().lower()
+    assert page.locator('#cv-results tr').count() == 4
+    assert page.locator('#cv-results tr').first.locator('td').count() == 4
     assert page.locator('#interval .interval-card').count() == 2
     interval_cards = page.locator('#interval .interval-card')
     assert 'stratified row bootstrap' in interval_cards.nth(0).inner_text().lower()

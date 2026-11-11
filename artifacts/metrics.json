@@ -279,6 +279,132 @@
       }
     }
   },
+  "development_grouped_cross_validation": {
+    "method": "StratifiedGroupKFold",
+    "n_splits": 5,
+    "seed": 42,
+    "development_rows": 9823,
+    "development_profile_groups": 9032,
+    "grouping": "Hash of the ten selected model-input features only; labels are not part of the group key.",
+    "scope": "Development data only; the final test holdout is excluded from all CV folds.",
+    "folds": [
+      {
+        "fold": 1,
+        "train_rows": 7878,
+        "validation_rows": 1945,
+        "validation_fatal_rows": 27,
+        "train_profile_groups": 7228,
+        "validation_profile_groups": 1804,
+        "group_overlap": 0
+      },
+      {
+        "fold": 2,
+        "train_rows": 7845,
+        "validation_rows": 1978,
+        "validation_fatal_rows": 17,
+        "train_profile_groups": 7220,
+        "validation_profile_groups": 1812,
+        "group_overlap": 0
+      },
+      {
+        "fold": 3,
+        "train_rows": 7826,
+        "validation_rows": 1997,
+        "validation_fatal_rows": 25,
+        "train_profile_groups": 7220,
+        "validation_profile_groups": 1812,
+        "group_overlap": 0
+      },
+      {
+        "fold": 4,
+        "train_rows": 7874,
+        "validation_rows": 1949,
+        "validation_fatal_rows": 27,
+        "train_profile_groups": 7226,
+        "validation_profile_groups": 1806,
+        "group_overlap": 0
+      },
+      {
+        "fold": 5,
+        "train_rows": 7869,
+        "validation_rows": 1954,
+        "validation_fatal_rows": 31,
+        "train_profile_groups": 7234,
+        "validation_profile_groups": 1798,
+        "group_overlap": 0
+      }
+    ],
+    "models": {
+      "majority": {
+        "oof_fatal_correct": 0,
+        "oof_fatal_rows": 127,
+        "oof_fatal_recall": 0.0,
+        "fold_fatal_recall": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "mean_fold_fatal_recall": 0.0,
+        "sd_fold_fatal_recall": 0.0,
+        "oof_macro_f1": 0.3054007833618359,
+        "mean_fold_macro_f1": 0.30539314688385066,
+        "sd_fold_macro_f1": 0.0015550198327521389
+      },
+      "balanced_logistic": {
+        "oof_fatal_correct": 63,
+        "oof_fatal_rows": 127,
+        "oof_fatal_recall": 0.49606299212598426,
+        "fold_fatal_recall": [
+          0.4444444444444444,
+          0.5294117647058824,
+          0.44,
+          0.5555555555555556,
+          0.5161290322580645
+        ],
+        "mean_fold_fatal_recall": 0.49710815939278935,
+        "sd_fold_fatal_recall": 0.0520966010896612,
+        "oof_macro_f1": 0.28186470665364033,
+        "mean_fold_macro_f1": 0.281724380797663,
+        "sd_fold_macro_f1": 0.01100577683829574
+      },
+      "balanced_tree": {
+        "oof_fatal_correct": 58,
+        "oof_fatal_rows": 127,
+        "oof_fatal_recall": 0.4566929133858268,
+        "fold_fatal_recall": [
+          0.4074074074074074,
+          0.6470588235294118,
+          0.32,
+          0.5555555555555556,
+          0.41935483870967744
+        ],
+        "mean_fold_fatal_recall": 0.46987532504041046,
+        "sd_fold_fatal_recall": 0.13005024737231036,
+        "oof_macro_f1": 0.36511525659353755,
+        "mean_fold_macro_f1": 0.3652832439805417,
+        "sd_fold_macro_f1": 0.015114922236099433
+      },
+      "balanced_forest": {
+        "oof_fatal_correct": 27,
+        "oof_fatal_rows": 127,
+        "oof_fatal_recall": 0.2125984251968504,
+        "fold_fatal_recall": [
+          0.25925925925925924,
+          0.4117647058823529,
+          0.2,
+          0.2222222222222222,
+          0.06451612903225806
+        ],
+        "mean_fold_fatal_recall": 0.23155246327921847,
+        "sd_fold_fatal_recall": 0.12472757035170788,
+        "oof_macro_f1": 0.42469280301432644,
+        "mean_fold_macro_f1": 0.4235547354028135,
+        "sd_fold_macro_f1": 0.017348991410738854
+      }
+    }
+  },
   "validation_fatal_error_analysis": {
     "split": "validation",
     "fatal_label": "Fatal injury",

@@ -42,6 +42,17 @@ One fixed grouped experiment selected a balanced random forest:
 | Balanced decision tree | 0.339 | 0.331 | 52.8% |
 | Balanced random forest | 0.408 | 0.442 | 73.1% |
 
+A separate five-fold `StratifiedGroupKFold` compares candidates using only the 9,823 development rows (127 fatal-labelled rows). Folds keep identical ten-feature input profiles together; the 2,493-row final test holdout is excluded from every CV fit and score.
+
+| Candidate | OOF fatal recall | Fatal rows caught | OOF macro-F1 |
+|---|---:|---:|---:|
+| Majority baseline | 0.0% | 0/127 | 0.305 |
+| Balanced logistic regression | 49.6% | 63/127 | 0.282 |
+| Balanced decision tree | 45.7% | 58/127 | 0.365 |
+| Balanced random forest | 21.3% | 27/127 | 0.425 |
+
+The forest leads on macro-F1, while logistic regression catches the most fatal rows; that is the clearest trade-off in this comparison. It remains exploratory because the earlier validation split selected the current model. Identical input profiles are not incident IDs, so the grouping cannot rule out the same real accident appearing across folds.
+
 The selected model's test recall is **35.5% fatal**, **38.7% serious** and **79.4% slight**. It misses most fatal cases. Its macro-F1 95% intervals are **0.412–0.474** under stratified row resampling and **0.411–0.473** under a profile-cluster sensitivity bootstrap (300 resamples of 2,258 test profiles; none omitted a class). The clusters are identical input profiles, not known incident IDs, so this still cannot quantify incident-level, temporal/geographic or model-selection uncertainty. The majority baseline's apparently strong accuracy is exactly why accuracy alone is misleading. The selected model correctly classified **3 of 33 fatal-labelled validation rows** and missed 30 (19 predicted slight, 11 serious). Because this same split selected the model, the audit is exploratory—not an independent performance estimate—and exposes only aggregate counts.
 
 These results are not directly comparable with the earlier study implementation: the input set, grouping rule and holdout changed. The engineering upgrade is not a claim that accuracy universally improved.

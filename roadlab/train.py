@@ -19,7 +19,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.inspection import permutation_importance
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, balanced_accuracy_score, classification_report, confusion_matrix, f1_score, log_loss
-from sklearn.model_selection import GroupShuffleSplit
+from sklearn.model_selection import GroupShuffleSplit, StratifiedGroupKFold
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.tree import DecisionTreeClassifier
@@ -36,6 +36,125 @@ def evaluate(y, prediction, probabilities, labels):
             "log_loss": log_loss(y, probabilities, labels=labels),
             "per_class": classification_report(y, prediction, labels=labels, output_dict=True, zero_division=0),
             "confusion_matrix": confusion_matrix(y, prediction, labels=labels).tolist()}
+
+
+def preprocess():
+    return ColumnTransformer([
+        ("numeric", Pipeline([("impute", SimpleImputer(strategy="median")), ("scale", StandardScaler())]), NUMERIC),
+        ("categorical", Pipeline([("impute", SimpleImputer(strategy="constant", fill_value="Unknown")),
+                                  ("encode", OneHotEncoder(handle_unknown="ignore", sparse_output=False))]), CATEGORICAL)])
+
+
+def candidate_estimators():
+    return {
+        "majority": DummyClassifier(strategy="most_frequent"),
+        "balanced_logistic": LogisticRegression(class_weight="balanced", max_iter=1500, random_state=SEED),
+        "balanced_tree": DecisionTreeClassifier(max_depth=8, min_samples_leaf=15, class_weight="balanced", random_state=SEED),
+        "balanced_forest": RandomForestClassifier(n_estimators=160, min_samples_leaf=8, max_depth=14,
+                                                   class_weight="balanced_subsample", n_jobs=2, random_state=SEED),
+    }
+
+
+def make_model(estimator):
+    return Pipeline([("preprocess", preprocess()), ("classifier", estimator)])
+
+
+def grouped_cv_splits(y, groups, n_splits=5):
+    """Return stratified folds while keeping each selected-feature profile in one fold."""
+    truth = np.asarray(y)
+    group_values = np.asarray(groups)
+    if truth.ndim != 1 or group_values.ndim != 1 or len(truth) != len(group_values) or not len(truth):
+        raise ValueError("y and groups must be aligned nonempty one-dimensional arrays")
+    if pd.isna(group_values).any():
+        raise ValueError("groups must not contain missing values")
+    if n_splits < 2 or pd.Series(group_values).nunique() < n_splits:
+        raise ValueError("n_splits must be at least two and no greater than the number of groups")
+    splitter = StratifiedGroupKFold(n_splits=n_splits, shuffle=True, random_state=SEED)
+    return list(splitter.split(np.zeros((len(truth), 1)), truth, group_values))
+
+
+def development_grouped_cross_validation(X, y, groups, n_splits=5):
+    """Compare candidates with out-of-fold predictions from development rows only."""
+    truth = np.asarray(y)
+    group_values = np.asarray(groups)
+    if len(X) != len(truth) or len(truth) != len(group_values):
+        raise ValueError("X, y and groups must have the same length")
+    labels = sorted(pd.unique(truth).tolist())
+    fatal_label = "Fatal injury"
+    if fatal_label not in labels:
+        raise ValueError("development data must contain fatal rows")
+    splits = grouped_cv_splits(truth, group_values, n_splits=n_splits)
+    names = list(candidate_estimators())
+    fold_metrics = {name: [] for name in names}
+    out_of_fold = {name: np.empty(len(truth), dtype=object) for name in names}
+    assignment_counts = np.zeros(len(truth), dtype=np.int8)
+    fold_reports = []
+
+    for fold_number, (train_rows, validation_rows) in enumerate(splits, start=1):
+        train_groups = set(group_values[train_rows])
+        validation_groups = set(group_values[validation_rows])
+        if not train_groups.isdisjoint(validation_groups):
+            raise AssertionError("a feature-profile group crossed a CV fold")
+        if not set(labels).issubset(set(truth[train_rows])):
+            raise ValueError(f"CV fold {fold_number} training data is missing a class")
+        assignment_counts[validation_rows] += 1
+        fold_fatal_rows = truth[validation_rows] == fatal_label
+        fold_reports.append({
+            "fold": fold_number,
+            "train_rows": int(len(train_rows)),
+            "validation_rows": int(len(validation_rows)),
+            "validation_fatal_rows": int(fold_fatal_rows.sum()),
+            "train_profile_groups": int(len(train_groups)),
+            "validation_profile_groups": int(len(validation_groups)),
+            "group_overlap": 0,
+        })
+        for name, estimator in candidate_estimators().items():
+            model = make_model(estimator)
+            model.fit(X.iloc[train_rows], truth[train_rows])
+            prediction = model.predict(X.iloc[validation_rows])
+            out_of_fold[name][validation_rows] = prediction
+            correct_fatal = int(np.sum(fold_fatal_rows & (prediction == fatal_label)))
+            fold_metrics[name].append({
+                "fatal_correct": correct_fatal,
+                "fatal_rows": int(fold_fatal_rows.sum()),
+                "fatal_recall": correct_fatal / int(fold_fatal_rows.sum()) if fold_fatal_rows.any() else None,
+                "macro_f1": float(f1_score(truth[validation_rows], prediction, labels=labels,
+                                            average="macro", zero_division=0)),
+            })
+
+    if not np.all(assignment_counts == 1):
+        raise AssertionError("each development row must receive exactly one out-of-fold prediction")
+
+    summaries = {}
+    total_fatal = int(np.sum(truth == fatal_label))
+    for name, fold_values in fold_metrics.items():
+        fatal_correct = int(sum(item["fatal_correct"] for item in fold_values))
+        recalls = np.asarray([item["fatal_recall"] for item in fold_values], dtype=float)
+        macro_scores = np.asarray([item["macro_f1"] for item in fold_values], dtype=float)
+        summaries[name] = {
+            "oof_fatal_correct": fatal_correct,
+            "oof_fatal_rows": total_fatal,
+            "oof_fatal_recall": fatal_correct / total_fatal,
+            "fold_fatal_recall": recalls.tolist(),
+            "mean_fold_fatal_recall": float(np.mean(recalls)),
+            "sd_fold_fatal_recall": float(np.std(recalls, ddof=1)),
+            "oof_macro_f1": float(f1_score(truth, out_of_fold[name], labels=labels,
+                                           average="macro", zero_division=0)),
+            "mean_fold_macro_f1": float(np.mean(macro_scores)),
+            "sd_fold_macro_f1": float(np.std(macro_scores, ddof=1)),
+        }
+
+    return {
+        "method": "StratifiedGroupKFold",
+        "n_splits": n_splits,
+        "seed": SEED,
+        "development_rows": int(len(truth)),
+        "development_profile_groups": int(pd.Series(group_values).nunique()),
+        "grouping": "Hash of the ten selected model-input features only; labels are not part of the group key.",
+        "scope": "Development data only; the final test holdout is excluded from all CV folds.",
+        "folds": fold_reports,
+        "models": summaries,
+    }
 
 
 def fatal_error_analysis(y, prediction, labels, fatal_label="Fatal injury"):
@@ -122,18 +241,15 @@ def run(path, output):
             raise ValueError("Every split must retain all three classes")
     for a, b in [(train, validation), (train, test), (validation, test)]:
         assert set(groups.iloc[a]).isdisjoint(set(groups.iloc[b]))
-    def preprocess():
-        return ColumnTransformer([
-            ("numeric", Pipeline([("impute", SimpleImputer(strategy="median")), ("scale", StandardScaler())]), NUMERIC),
-            ("categorical", Pipeline([("impute", SimpleImputer(strategy="constant", fill_value="Unknown")), ("encode", OneHotEncoder(handle_unknown="ignore", sparse_output=False))]), CATEGORICAL)])
-    candidates = {
-        "majority": DummyClassifier(strategy="most_frequent"),
-        "balanced_logistic": LogisticRegression(class_weight="balanced", max_iter=1500, random_state=SEED),
-        "balanced_tree": DecisionTreeClassifier(max_depth=8, min_samples_leaf=15, class_weight="balanced", random_state=SEED),
-        "balanced_forest": RandomForestClassifier(n_estimators=160, min_samples_leaf=8, max_depth=14, class_weight="balanced_subsample", n_jobs=2, random_state=SEED)}
+    # Cross-validate only development rows (the original train+validation partition).
+    # Test rows remain excluded from every CV fit, score and model comparison here.
+    development_cv = development_grouped_cross_validation(
+        X.iloc[development].reset_index(drop=True), y.iloc[development].reset_index(drop=True),
+        groups.iloc[development].to_numpy())
+    candidates = candidate_estimators()
     models, validation_scores = {}, {}
     for name, estimator in candidates.items():
-        model = Pipeline([("preprocess", preprocess()), ("classifier", estimator)])
+        model = make_model(estimator)
         model.fit(X.iloc[train], y.iloc[train])
         models[name] = model
         validation_scores[name] = f1_score(y.iloc[validation], model.predict(X.iloc[validation]), average="macro", zero_division=0)
@@ -164,7 +280,8 @@ def run(path, output):
     report = {"selected": selected_name, "selection_metric": "validation macro-F1", "seed": SEED, "labels": labels,
               "dataset": {"source": SOURCE, "sha256": actual, "raw_rows": len(raw), "unique_rows": len(data), "removed_duplicates": len(raw)-len(data), "selected_feature_groups": int(groups.nunique())},
               "split": {"method": "GroupShuffleSplit on identical selected-feature profiles", "rows": {"train": len(train), "validation": len(validation), "test": len(test)}, "class_counts": counts, "profile_overlap": 0},
-              "models": reports, "validation_fatal_error_analysis": validation_fatal_analysis,
+              "models": reports, "development_grouped_cross_validation": development_cv,
+              "validation_fatal_error_analysis": validation_fatal_analysis,
               "selected_macro_f1_bootstrap_95_ci": interval,
               "selected_macro_f1_profile_cluster_bootstrap_95_ci": profile_bootstrap["interval"],
               "bootstrap_replicates": 300, "profile_cluster_bootstrap": profile_bootstrap,
@@ -197,6 +314,7 @@ def run(path, output):
                       "profile_cluster_bootstrap_95_ci": profile_bootstrap["interval"],
                       "profile_cluster_bootstrap": profile_bootstrap,
                       "validation_fatal_error_analysis": validation_fatal_analysis,
+                      "development_grouped_cross_validation": development_cv,
                       "split": report["split"]}, indent=2))
     return report
 
