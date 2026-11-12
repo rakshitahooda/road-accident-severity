@@ -128,6 +128,45 @@ def fatal_score_threshold_curve(y, fatal_scores, thresholds=None, fatal_label="F
     return curve
 
 
+def fatal_score_calibration(y, fatal_scores, n_bins=10, fatal_label="Fatal injury"):
+    """Summarize raw fatal-class scores in fixed-width bins; fit no calibrator."""
+    truth = np.asarray(y)
+    scores = np.asarray(fatal_scores, dtype=float)
+    if truth.ndim != 1 or scores.ndim != 1 or len(truth) == 0 or len(truth) != len(scores):
+        raise ValueError("y and fatal_scores must be aligned nonempty one-dimensional arrays")
+    if not np.isfinite(scores).all() or np.any((scores < 0) | (scores > 1)):
+        raise ValueError("fatal_scores must be finite values between zero and one")
+    if isinstance(n_bins, (bool, np.bool_)) or not isinstance(n_bins, (int, np.integer)) or n_bins < 2:
+        raise ValueError("n_bins must be an integer of at least two")
+
+    observed_fatal = truth == fatal_label
+    assignments = np.minimum((scores * n_bins).astype(int), n_bins - 1)
+    bins = []
+    for index in range(n_bins):
+        selected = assignments == index
+        count = int(selected.sum())
+        if not count:
+            continue
+        bins.append({
+            "lower": index / n_bins,
+            "upper": (index + 1) / n_bins,
+            "count": count,
+            "mean_score": float(np.mean(scores[selected])),
+            "fatal_rate": float(np.mean(observed_fatal[selected])),
+        })
+    return {
+        "method": "Fixed-width one-vs-rest reliability bins",
+        "oof_rows": int(len(truth)),
+        "fatal_rows": int(observed_fatal.sum()),
+        "brier_score": float(np.mean((scores - observed_fatal.astype(float)) ** 2)),
+        "bins": bins,
+        "interpretation": (
+            "Descriptive bins of uncalibrated out-of-fold development scores; no calibration "
+            "transform is fitted and these values are not used to select a model or cutoff."
+        ),
+    }
+
+
 def development_grouped_cross_validation(X, y, groups, n_splits=5):
     """Compare candidates with out-of-fold predictions from development rows only."""
     truth = np.asarray(y)
@@ -208,6 +247,8 @@ def development_grouped_cross_validation(X, y, groups, n_splits=5):
             "sd_fold_macro_f1": float(np.std(macro_scores, ddof=1)),
             "fatal_score_threshold_curve": fatal_score_threshold_curve(
                 truth, out_of_fold_fatal_scores[name]),
+            "fatal_score_calibration": fatal_score_calibration(
+                truth, out_of_fold_fatal_scores[name]),
         }
 
     return {
@@ -221,6 +262,10 @@ def development_grouped_cross_validation(X, y, groups, n_splits=5):
         "fatal_score_threshold_method": (
             "Descriptive one-vs-rest cutoffs over out-of-fold fatal-class scores; scores are uncalibrated. "
             "No cutoff is selected or recommended, and these cutoffs do not change the live three-class model."
+        ),
+        "fatal_score_calibration_method": (
+            "Descriptive fixed-width bins of uncalibrated one-vs-rest out-of-fold fatal scores on development data. "
+            "No calibration transform is fitted; the summary is not used for model or cutoff selection."
         ),
         "folds": fold_reports,
         "models": summaries,

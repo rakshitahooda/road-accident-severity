@@ -288,6 +288,7 @@
     "grouping": "Hash of the ten selected model-input features only; labels are not part of the group key.",
     "scope": "Development data only; the final test holdout is excluded from all CV folds.",
     "fatal_score_threshold_method": "Descriptive one-vs-rest cutoffs over out-of-fold fatal-class scores; scores are uncalibrated. No cutoff is selected or recommended, and these cutoffs do not change the live three-class model.",
+    "fatal_score_calibration_method": "Descriptive fixed-width bins of uncalibrated one-vs-rest out-of-fold fatal scores on development data. No calibration transform is fitted; the summary is not used for model or cutoff selection.",
     "folds": [
       {
         "fold": 1,
@@ -563,7 +564,23 @@
             "nonfatal_false_alarm_rate": 0.0,
             "all_rows_flagged": 0
           }
-        ]
+        ],
+        "fatal_score_calibration": {
+          "method": "Fixed-width one-vs-rest reliability bins",
+          "oof_rows": 9823,
+          "fatal_rows": 127,
+          "brier_score": 0.012928840476432862,
+          "bins": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 9823,
+              "mean_score": 0.0,
+              "fatal_rate": 0.012928840476432862
+            }
+          ],
+          "interpretation": "Descriptive bins of uncalibrated out-of-fold development scores; no calibration transform is fitted and these values are not used to select a model or cutoff."
+        }
       },
       "balanced_logistic": {
         "oof_fatal_correct": 63,
@@ -792,7 +809,86 @@
             "nonfatal_false_alarm_rate": 0.0,
             "all_rows_flagged": 0
           }
-        ]
+        ],
+        "fatal_score_calibration": {
+          "method": "Fixed-width one-vs-rest reliability bins",
+          "oof_rows": 9823,
+          "fatal_rows": 127,
+          "brier_score": 0.10660167551294221,
+          "bins": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 2370,
+              "mean_score": 0.038598866351627084,
+              "fatal_rate": 0.006329113924050633
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "count": 1933,
+              "mean_score": 0.15291494743200926,
+              "fatal_rate": 0.007759958613554061
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "count": 1848,
+              "mean_score": 0.24843033912988768,
+              "fatal_rate": 0.011363636363636364
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "count": 1425,
+              "mean_score": 0.34638255044366073,
+              "fatal_rate": 0.015438596491228071
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "count": 1013,
+              "mean_score": 0.4460175173677447,
+              "fatal_rate": 0.017769002961500493
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "count": 689,
+              "mean_score": 0.544654490230638,
+              "fatal_rate": 0.026124818577648767
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "count": 325,
+              "mean_score": 0.6452351268075864,
+              "fatal_rate": 0.033846153846153845
+            },
+            {
+              "lower": 0.7,
+              "upper": 0.8,
+              "count": 162,
+              "mean_score": 0.741179383061846,
+              "fatal_rate": 0.030864197530864196
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "count": 48,
+              "mean_score": 0.8400223201391254,
+              "fatal_rate": 0.041666666666666664
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "count": 10,
+              "mean_score": 0.9120627946851647,
+              "fatal_rate": 0.0
+            }
+          ],
+          "interpretation": "Descriptive bins of uncalibrated out-of-fold development scores; no calibration transform is fitted and these values are not used to select a model or cutoff."
+        }
       },
       "balanced_tree": {
         "oof_fatal_correct": 58,
@@ -1021,7 +1117,86 @@
             "nonfatal_false_alarm_rate": 0.0,
             "all_rows_flagged": 0
           }
-        ]
+        ],
+        "fatal_score_calibration": {
+          "method": "Fixed-width one-vs-rest reliability bins",
+          "oof_rows": 9823,
+          "fatal_rows": 127,
+          "brier_score": 0.09272297808174208,
+          "bins": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 4558,
+              "mean_score": 0.0,
+              "fatal_rate": 0.006581834137779728
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "count": 865,
+              "mean_score": 0.12743099952232992,
+              "fatal_rate": 0.010404624277456647
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "count": 1833,
+              "mean_score": 0.24860278559860094,
+              "fatal_rate": 0.00872885979268958
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "count": 1182,
+              "mean_score": 0.3298166954407317,
+              "fatal_rate": 0.011844331641285956
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "count": 421,
+              "mean_score": 0.4541979352972492,
+              "fatal_rate": 0.019002375296912115
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "count": 57,
+              "mean_score": 0.5613632512811615,
+              "fatal_rate": 0.03508771929824561
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "count": 276,
+              "mean_score": 0.6773831823496729,
+              "fatal_rate": 0.03260869565217391
+            },
+            {
+              "lower": 0.7,
+              "upper": 0.8,
+              "count": 396,
+              "mean_score": 0.7445037361636112,
+              "fatal_rate": 0.045454545454545456
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "count": 166,
+              "mean_score": 0.853698619240206,
+              "fatal_rate": 0.08433734939759036
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "count": 69,
+              "mean_score": 0.9192161369365549,
+              "fatal_rate": 0.10144927536231885
+            }
+          ],
+          "interpretation": "Descriptive bins of uncalibrated out-of-fold development scores; no calibration transform is fitted and these values are not used to select a model or cutoff."
+        }
       },
       "balanced_forest": {
         "oof_fatal_correct": 27,
@@ -1250,7 +1425,65 @@
             "nonfatal_false_alarm_rate": 0.0,
             "all_rows_flagged": 0
           }
-        ]
+        ],
+        "fatal_score_calibration": {
+          "method": "Fixed-width one-vs-rest reliability bins",
+          "oof_rows": 9823,
+          "fatal_rows": 127,
+          "brier_score": 0.04204565105608883,
+          "bins": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "count": 2246,
+              "mean_score": 0.07134311951610312,
+              "fatal_rate": 0.0017809439002671415
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "count": 4607,
+              "mean_score": 0.14756700781470655,
+              "fatal_rate": 0.00824831777729542
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.3,
+              "count": 2153,
+              "mean_score": 0.23820524048933364,
+              "fatal_rate": 0.01579191825359963
+            },
+            {
+              "lower": 0.3,
+              "upper": 0.4,
+              "count": 595,
+              "mean_score": 0.33919335124645644,
+              "fatal_rate": 0.047058823529411764
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "count": 187,
+              "mean_score": 0.4392191234016687,
+              "fatal_rate": 0.10695187165775401
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6,
+              "count": 32,
+              "mean_score": 0.5336279963875974,
+              "fatal_rate": 0.09375
+            },
+            {
+              "lower": 0.6,
+              "upper": 0.7,
+              "count": 3,
+              "mean_score": 0.6115750139306425,
+              "fatal_rate": 0.0
+            }
+          ],
+          "interpretation": "Descriptive bins of uncalibrated out-of-fold development scores; no calibration transform is fitted and these values are not used to select a model or cutoff."
+        }
       }
     }
   },

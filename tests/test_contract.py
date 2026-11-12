@@ -135,6 +135,12 @@ def test_development_grouped_cv_metadata_excludes_test_holdout():
         assert 0 <= model["oof_fatal_recall"] <= 1
         assert 0 <= model["oof_macro_f1"] <= 1
         assert len(model["fold_fatal_recall"]) == 5
+        calibration = model["fatal_score_calibration"]
+        assert calibration["oof_rows"] == cv["development_rows"]
+        assert calibration["fatal_rows"] == development_fatal_rows
+        assert 0 <= calibration["brier_score"] <= 1
+        assert sum(item["count"] for item in calibration["bins"]) == cv["development_rows"]
+        assert "no calibration transform is fitted" in calibration["interpretation"]
         curve = model["fatal_score_threshold_curve"]
         assert len(curve) == 21
         assert [point["threshold"] for point in curve] == pytest.approx([i / 20 for i in range(21)])
@@ -169,6 +175,38 @@ def test_metrics_include_fatal_recall_interval_for_fixed_test_set():
     assert interval == pytest.approx([0.2111665909, 0.5305204594])
     assert 0 <= interval[0] < interval[1] <= 1
 
+
+
+def test_fatal_score_calibration_reports_raw_oof_reliability_only():
+    from roadlab.train import fatal_score_calibration
+
+    result = fatal_score_calibration(
+        ["Fatal injury", "Slight Injury", "Fatal injury", "Serious Injury"],
+        [.1, .2, .7, .9],
+        n_bins=2,
+    )
+
+    assert result["brier_score"] == pytest.approx(.4375)
+    assert result["oof_rows"] == 4
+    assert result["fatal_rows"] == 2
+    assert len(result["bins"]) == 2
+    assert result["bins"][0] == {"lower": 0.0, "upper": 0.5, "count": 2, "mean_score": pytest.approx(.15), "fatal_rate": .5}
+    assert result["bins"][1] == {"lower": 0.5, "upper": 1.0, "count": 2, "mean_score": pytest.approx(.8), "fatal_rate": .5}
+    assert "no calibration transform is fitted" in result["interpretation"]
+
+
+@pytest.mark.parametrize(("truth", "scores", "n_bins", "match"), [
+    (["Fatal injury"], [], 10, "aligned"),
+    (["Fatal injury"], [float("nan")], 10, "finite"),
+    (["Fatal injury"], [1.1], 10, "finite"),
+    (["Fatal injury"], [.5], 1, "at least two"),
+    (["Fatal injury"], [.5], True, "integer"),
+])
+def test_fatal_score_calibration_rejects_invalid_inputs(truth, scores, n_bins, match):
+    from roadlab.train import fatal_score_calibration
+
+    with pytest.raises(ValueError, match=match):
+        fatal_score_calibration(truth, scores, n_bins=n_bins)
 
 def test_grouped_cv_splits_keep_feature_profiles_together():
     import numpy as np

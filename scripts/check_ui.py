@@ -45,6 +45,9 @@ with sync_playwright() as p:
     assert 'final test holdout is excluded' in page.locator('#cv-note').inner_text().lower()
     assert page.locator('#cv-results tr').count() == 4
     assert page.locator('#cv-results tr').first.locator('td').count() == 4
+    assert 'brier score' in page.locator('#fatal-calibration-summary').inner_text().lower()
+    assert page.locator('#fatal-calibration-rows tr').count() > 0
+    assert 'no calibration transform is fitted' in page.locator('#fatal-calibration-note').inner_text().lower()
     assert page.locator('#fatal-threshold-model option').count() == 4
     assert '11/31 test cases' in page.locator('#fatal-recall-ci').inner_text()
     assert 'wilson interval' in page.locator('#fatal-recall-ci').inner_text().lower()

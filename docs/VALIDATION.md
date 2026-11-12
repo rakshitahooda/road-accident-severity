@@ -38,3 +38,10 @@ This is a local record, not a claim that GitHub Actions or production hosting pa
 
 
 The fixed test set contains 31 fatal-labelled rows, of which 11 were classified as fatal (recall 0.355). The 95% Wilson interval is 0.211–0.531; it reflects binomial sampling variation for this fixed model and holdout only, not uncertainty from retraining, model selection, or new datasets.
+
+## Rechecked locally on 2026-11-12 after adding grouped out-of-fold fatal-score reliability diagnostics
+
+- Added fixed-width reliability bins and Brier scores for each candidate's raw one-vs-rest fatal scores across the grouped development folds (9,823 rows, including 127 fatal-labelled rows). No calibrator is fitted, and these summaries are not used for model or cutoff selection; the held-out test set and live three-class inference path remain unchanged.
+- 40 pytest checks passed. Ruff, JavaScript syntax, Python compilation and `git diff --check` passed.
+- Playwright Chromium passed live inference, tab interaction and the fatal-score reliability display, with no JavaScript errors or horizontal overflow at 390px.
+- These are local checks, not a claim that GitHub Actions or production hosting passed. The scores remain uncalibrated and the project is not a safety tool.
