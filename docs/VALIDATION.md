@@ -45,3 +45,8 @@ The fixed test set contains 31 fatal-labelled rows, of which 11 were classified 
 - 40 pytest checks passed. Ruff, JavaScript syntax, Python compilation and `git diff --check` passed.
 - Playwright Chromium passed live inference, tab interaction and the fatal-score reliability display, with no JavaScript errors or horizontal overflow at 390px.
 - These are local checks, not a claim that GitHub Actions or production hosting passed. The scores remain uncalibrated and the project is not a safety tool.
+
+## Cross-version checks and CI coverage on 2026-11-12
+
+- Repeated model training with Python 3.12.14; the balanced random forest remained selected and the 11/31 held-out fatal-case result remained unchanged. The full test suite passed: 40 checks.
+- GitHub Actions is configured to train and test on Python 3.11 and 3.12, run Ruff, and check frontend JavaScript syntax with Node 22. This local record does not claim a hosted Actions run has passed.

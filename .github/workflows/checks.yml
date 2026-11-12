@@ -3,13 +3,21 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.12']
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: ${{ matrix.python-version }}
           cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - run: pip install -r requirements-dev.txt
       - run: python -m roadlab.train
       - run: python -m pytest -q
-      - run: ruff check roadlab tests
+      - run: ruff check roadlab tests scripts
+      - run: node --check web/app.js
