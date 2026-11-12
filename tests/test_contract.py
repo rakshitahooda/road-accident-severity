@@ -121,6 +121,7 @@ def test_development_grouped_cv_metadata_excludes_test_holdout():
     assert cv["n_splits"] == 5
     assert cv["development_rows"] == split["rows"]["train"] + split["rows"]["validation"]
     assert "final test holdout is excluded" in cv["scope"].lower()
+    assert "no cutoff is selected or recommended" in cv["fatal_score_threshold_method"].lower()
     assert len(cv["folds"]) == 5
     assert all(fold["group_overlap"] == 0 and fold["validation_fatal_rows"] > 0 for fold in cv["folds"])
     development_fatal_rows = (
@@ -134,6 +135,14 @@ def test_development_grouped_cv_metadata_excludes_test_holdout():
         assert 0 <= model["oof_fatal_recall"] <= 1
         assert 0 <= model["oof_macro_f1"] <= 1
         assert len(model["fold_fatal_recall"]) == 5
+        curve = model["fatal_score_threshold_curve"]
+        assert len(curve) == 21
+        assert [point["threshold"] for point in curve] == pytest.approx([i / 20 for i in range(21)])
+        assert all(point["fatal_rows"] == development_fatal_rows for point in curve)
+        assert all(0 <= point["fatal_recall"] <= 1 for point in curve)
+        assert all(0 <= point["nonfatal_false_alarm_rate"] <= 1 for point in curve)
+        assert all(point["fatal_detected"] <= point["fatal_rows"] for point in curve)
+        assert all(point["nonfatal_flagged"] <= point["nonfatal_rows"] for point in curve)
 
 
 def test_grouped_cv_splits_keep_feature_profiles_together():
@@ -153,6 +162,45 @@ def test_grouped_cv_splits_keep_feature_profiles_together():
         assert set(y[validation_rows]) == classes
         validation_counts[validation_rows] += 1
     assert np.all(validation_counts == 1)
+
+
+def test_fatal_score_threshold_curve_exposes_recall_false_alarm_tradeoff():
+    from roadlab.train import fatal_score_threshold_curve
+
+    curve = fatal_score_threshold_curve(
+        ["Fatal injury", "Fatal injury", "Fatal injury", "Serious Injury", "Slight Injury", "Slight Injury"],
+        [.9, .4, .1, .8, .3, .05],
+        thresholds=[.5, .2],
+    )
+
+    assert curve[0] == {
+        "threshold": .5,
+        "fatal_detected": 1,
+        "fatal_rows": 3,
+        "fatal_recall": pytest.approx(1 / 3),
+        "nonfatal_flagged": 1,
+        "nonfatal_rows": 3,
+        "nonfatal_false_alarm_rate": pytest.approx(1 / 3),
+        "all_rows_flagged": 2,
+    }
+    assert curve[1]["fatal_detected"] == 2
+    assert curve[1]["fatal_recall"] == pytest.approx(2 / 3)
+    assert curve[1]["nonfatal_flagged"] == 2
+    assert curve[1]["nonfatal_false_alarm_rate"] == pytest.approx(2 / 3)
+
+
+@pytest.mark.parametrize(("truth", "scores", "thresholds", "match"), [
+    (["Fatal injury"], [], None, "aligned"),
+    (["Fatal injury"], [float("nan")], None, "finite"),
+    (["Fatal injury"], [1.1], None, "finite"),
+    (["Fatal injury"], [.5], [-.1], "thresholds"),
+    (["Fatal injury"], [.5], [.5, .5], "thresholds"),
+])
+def test_fatal_score_threshold_curve_rejects_invalid_inputs(truth, scores, thresholds, match):
+    from roadlab.train import fatal_score_threshold_curve
+
+    with pytest.raises(ValueError, match=match):
+        fatal_score_threshold_curve(truth, scores, thresholds=thresholds)
 
 
 def test_validation_fatal_error_analysis_uses_aggregate_counts():

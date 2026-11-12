@@ -73,6 +73,43 @@ def grouped_cv_splits(y, groups, n_splits=5):
     return list(splitter.split(np.zeros((len(truth), 1)), truth, group_values))
 
 
+def fatal_score_threshold_curve(y, fatal_scores, thresholds=None, fatal_label="Fatal injury"):
+    """Describe fatal-score cutoffs without selecting a threshold or using test rows."""
+    truth = np.asarray(y)
+    scores = np.asarray(fatal_scores, dtype=float)
+    if truth.ndim != 1 or scores.ndim != 1 or len(truth) == 0 or len(truth) != len(scores):
+        raise ValueError("y and fatal_scores must be aligned nonempty one-dimensional arrays")
+    if not np.isfinite(scores).all() or np.any((scores < 0) | (scores > 1)):
+        raise ValueError("fatal_scores must be finite values between zero and one")
+    if thresholds is None:
+        cutoffs = np.round(np.arange(0, 1.0001, .05), 2)
+    else:
+        cutoffs = np.asarray(thresholds, dtype=float)
+    if (cutoffs.ndim != 1 or not len(cutoffs) or not np.isfinite(cutoffs).all()
+            or np.any((cutoffs < 0) | (cutoffs > 1)) or len(np.unique(cutoffs)) != len(cutoffs)):
+        raise ValueError("thresholds must be unique finite values between zero and one")
+
+    is_fatal = truth == fatal_label
+    fatal_rows = int(is_fatal.sum())
+    nonfatal_rows = int((~is_fatal).sum())
+    curve = []
+    for cutoff in cutoffs:
+        flagged = scores >= cutoff
+        detected = int(np.sum(is_fatal & flagged))
+        false_alarms = int(np.sum((~is_fatal) & flagged))
+        curve.append({
+            "threshold": float(cutoff),
+            "fatal_detected": detected,
+            "fatal_rows": fatal_rows,
+            "fatal_recall": detected / fatal_rows if fatal_rows else None,
+            "nonfatal_flagged": false_alarms,
+            "nonfatal_rows": nonfatal_rows,
+            "nonfatal_false_alarm_rate": false_alarms / nonfatal_rows if nonfatal_rows else None,
+            "all_rows_flagged": int(flagged.sum()),
+        })
+    return curve
+
+
 def development_grouped_cross_validation(X, y, groups, n_splits=5):
     """Compare candidates with out-of-fold predictions from development rows only."""
     truth = np.asarray(y)
@@ -87,6 +124,7 @@ def development_grouped_cross_validation(X, y, groups, n_splits=5):
     names = list(candidate_estimators())
     fold_metrics = {name: [] for name in names}
     out_of_fold = {name: np.empty(len(truth), dtype=object) for name in names}
+    out_of_fold_fatal_scores = {name: np.full(len(truth), np.nan, dtype=float) for name in names}
     assignment_counts = np.zeros(len(truth), dtype=np.int8)
     fold_reports = []
 
@@ -111,7 +149,13 @@ def development_grouped_cross_validation(X, y, groups, n_splits=5):
         for name, estimator in candidate_estimators().items():
             model = make_model(estimator)
             model.fit(X.iloc[train_rows], truth[train_rows])
-            prediction = model.predict(X.iloc[validation_rows])
+            validation_X = X.iloc[validation_rows]
+            prediction = model.predict(validation_X)
+            class_order = list(model.classes_)
+            if fatal_label not in class_order:
+                raise ValueError(f"CV fold {fold_number} model {name} is missing the fatal class")
+            fatal_column = class_order.index(fatal_label)
+            out_of_fold_fatal_scores[name][validation_rows] = model.predict_proba(validation_X)[:, fatal_column]
             out_of_fold[name][validation_rows] = prediction
             correct_fatal = int(np.sum(fold_fatal_rows & (prediction == fatal_label)))
             fold_metrics[name].append({
@@ -124,6 +168,8 @@ def development_grouped_cross_validation(X, y, groups, n_splits=5):
 
     if not np.all(assignment_counts == 1):
         raise AssertionError("each development row must receive exactly one out-of-fold prediction")
+    if any(not np.isfinite(scores).all() for scores in out_of_fold_fatal_scores.values()):
+        raise AssertionError("each development row must receive one finite out-of-fold fatal score")
 
     summaries = {}
     total_fatal = int(np.sum(truth == fatal_label))
@@ -142,6 +188,8 @@ def development_grouped_cross_validation(X, y, groups, n_splits=5):
                                            average="macro", zero_division=0)),
             "mean_fold_macro_f1": float(np.mean(macro_scores)),
             "sd_fold_macro_f1": float(np.std(macro_scores, ddof=1)),
+            "fatal_score_threshold_curve": fatal_score_threshold_curve(
+                truth, out_of_fold_fatal_scores[name]),
         }
 
     return {
@@ -152,6 +200,10 @@ def development_grouped_cross_validation(X, y, groups, n_splits=5):
         "development_profile_groups": int(pd.Series(group_values).nunique()),
         "grouping": "Hash of the ten selected model-input features only; labels are not part of the group key.",
         "scope": "Development data only; the final test holdout is excluded from all CV folds.",
+        "fatal_score_threshold_method": (
+            "Descriptive one-vs-rest cutoffs over out-of-fold fatal-class scores; scores are uncalibrated. "
+            "No cutoff is selected or recommended, and these cutoffs do not change the live three-class model."
+        ),
         "folds": fold_reports,
         "models": summaries,
     }

@@ -45,6 +45,15 @@ with sync_playwright() as p:
     assert 'final test holdout is excluded' in page.locator('#cv-note').inner_text().lower()
     assert page.locator('#cv-results tr').count() == 4
     assert page.locator('#cv-results tr').first.locator('td').count() == 4
+    assert page.locator('#fatal-threshold-model option').count() == 4
+    assert 'fatal recall' in page.locator('#fatal-threshold-scores').inner_text().lower()
+    assert 'nonfatal false-alarm rate' in page.locator('#fatal-threshold-scores').inner_text().lower()
+    page.locator('#fatal-threshold-slider').evaluate("element => { element.value = '0.25'; element.dispatchEvent(new Event('input', { bubbles: true })); }")
+    assert page.locator('#fatal-threshold-value').inner_text() == '0.25'
+    assert 'fatal rows flagged' in page.locator('#fatal-threshold-counts').inner_text().lower()
+    page.locator('#fatal-threshold-model').select_option('balanced_logistic')
+    assert 'fatal rows flagged' in page.locator('#fatal-threshold-counts').inner_text().lower()
+    assert 'no cutoff is selected' in page.locator('.threshold-explorer').inner_text().lower()
     assert page.locator('#interval .interval-card').count() == 2
     interval_cards = page.locator('#interval .interval-card')
     assert 'stratified row bootstrap' in interval_cards.nth(0).inner_text().lower()
@@ -52,13 +61,15 @@ with sync_playwright() as p:
     assert 'profile-cluster sensitivity' in interval_cards.nth(1).inner_text().lower()
     assert '2,258 test profiles' in interval_cards.nth(1).inner_text()
     assert 'not incident IDs' in page.locator('#interval-note').inner_text()
-    page.screenshot(path='docs/evidence.png', full_page=True)
+    page.locator('.threshold-explorer').screenshot(path='docs/evidence.png')
     page.locator('[data-tab=method]').click()
     assert page.locator('#method').is_visible()
     page.locator('[data-tab=experiment]').click()
     page.set_viewport_size({"width": 390, "height": 844})
     assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
-    page.screenshot(path='docs/mobile.png', full_page=True)
+    page.locator('[data-tab=evaluation]').click()
+    assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
+    page.screenshot(path='docs/mobile.png', full_page=False)
     assert not errors, errors
     browser.close()
     print(json.dumps({"live_inference": "passed", "tabs": "passed", "mobile_overflow": False, "javascript_errors": errors}))

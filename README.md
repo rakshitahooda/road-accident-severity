@@ -10,6 +10,7 @@ A reproducible machine-learning experiment with a working local web interface an
 - Grouped train/validation/test splits keep identical input profiles together. Learned preprocessing is fitted only on training data.
 - Majority baseline and three balanced classifiers, selected by validation macro-F1, not test accuracy.
 - Per-class recall, confusion matrices, balanced accuracy, validation permutation importance and a validation-only fatal-miss audit; row- and profile-cluster bootstrap intervals.
+- Grouped out-of-fold fatal-score cutoff exploration shows fatal-recall/false-alarm trade-offs without choosing a cutoff or touching the test holdout.
 - Real local single/batch inference, strict input validation, OpenAPI documentation, responsive UI, automated tests and GitHub Actions.
 - Dataset hash checks, exact dependency versions, saved experiment metadata, model card and reproducible training command.
 
