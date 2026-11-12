@@ -46,6 +46,8 @@ with sync_playwright() as p:
     assert page.locator('#cv-results tr').count() == 4
     assert page.locator('#cv-results tr').first.locator('td').count() == 4
     assert page.locator('#fatal-threshold-model option').count() == 4
+    assert '11/31 test cases' in page.locator('#fatal-recall-ci').inner_text()
+    assert 'wilson interval' in page.locator('#fatal-recall-ci').inner_text().lower()
     assert 'fatal recall' in page.locator('#fatal-threshold-scores').inner_text().lower()
     assert 'nonfatal false-alarm rate' in page.locator('#fatal-threshold-scores').inner_text().lower()
     page.locator('#fatal-threshold-slider').evaluate("element => { element.value = '0.25'; element.dispatchEvent(new Event('input', { bubbles: true })); }")
@@ -54,6 +56,14 @@ with sync_playwright() as p:
     page.locator('#fatal-threshold-model').select_option('balanced_logistic')
     assert 'fatal rows flagged' in page.locator('#fatal-threshold-counts').inner_text().lower()
     assert 'no cutoff is selected' in page.locator('.threshold-explorer').inner_text().lower()
+    with page.expect_download() as download_info:
+        page.locator('#export-fatal-cutoffs').click()
+    download = download_info.value
+    assert download.suggested_filename == 'roadlab-balanced_logistic-fatal-cutoffs.csv'
+    download.save_as('/tmp/roadlab-fatal-cutoffs.csv')
+    csv_text = Path('/tmp/roadlab-fatal-cutoffs.csv').read_text()
+    assert csv_text.startswith('\"threshold\",\"fatal_detected\"')
+    assert len(csv_text.splitlines()) == 22
     assert page.locator('#interval .interval-card').count() == 2
     interval_cards = page.locator('#interval .interval-card')
     assert 'stratified row bootstrap' in interval_cards.nth(0).inner_text().lower()
