@@ -145,6 +145,31 @@ def test_development_grouped_cv_metadata_excludes_test_holdout():
         assert all(point["nonfatal_flagged"] <= point["nonfatal_rows"] for point in curve)
 
 
+def test_fatal_recall_wilson_interval_reflects_small_test_count():
+    from roadlab.train import wilson_interval
+
+    lower, upper = wilson_interval(11, 31)
+    assert 0 < lower < 11 / 31 < upper < 1
+    assert wilson_interval(0, 31)[0] == 0
+    assert wilson_interval(31, 31)[1] == 1
+    with pytest.raises(ValueError, match="counts"):
+        wilson_interval(32, 31)
+
+
+def test_metrics_include_fatal_recall_interval_for_fixed_test_set():
+    metrics = json.loads((ROOT / "artifacts/metrics.json").read_text())
+    counts = metrics["selected_fatal_recall_test_counts"]
+    interval = metrics["selected_fatal_recall_wilson_95_ci"]
+    fatal_rows = metrics["split"]["class_counts"]["test"]["Fatal injury"]
+    recall = metrics["models"][metrics["selected"]]["test"]["per_class"]["Fatal injury"]["recall"]
+
+    assert counts == {"detected": 11, "fatal_rows": fatal_rows}
+    assert counts["fatal_rows"] == 31
+    assert interval[0] < recall < interval[1]
+    assert interval == pytest.approx([0.2111665909, 0.5305204594])
+    assert 0 <= interval[0] < interval[1] <= 1
+
+
 def test_grouped_cv_splits_keep_feature_profiles_together():
     import numpy as np
     from roadlab.train import grouped_cv_splits

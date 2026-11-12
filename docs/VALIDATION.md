@@ -35,3 +35,6 @@ This is a local record, not a claim that GitHub Actions or production hosting pa
 - The grouped out-of-fold cutoff explorer is descriptive only. For logistic regression at 0.50, it flags 36/127 fatal-labelled development rows and 1,198/9,696 nonfatal rows. These uncalibrated scores are not an operating recommendation; lowering the threshold changes both counts.
 - 32 pytest checks passed. Ruff checks, JavaScript syntax validation and `git diff --check` passed. Playwright Chromium passed live inference and tab interactions; the 390px evidence view had no horizontal overflow or JavaScript errors.
 - The threshold-explorer evidence image was refreshed. These are local checks, not a claim that GitHub Actions or production hosting passed.
+
+
+The fixed test set contains 31 fatal-labelled rows, of which 11 were classified as fatal (recall 0.355). The 95% Wilson interval is 0.211–0.531; it reflects binomial sampling variation for this fixed model and holdout only, not uncertainty from retraining, model selection, or new datasets.

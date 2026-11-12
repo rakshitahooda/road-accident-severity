@@ -1277,6 +1277,14 @@
     0.4120976095783161,
     0.47364227959410204
   ],
+  "selected_fatal_recall_test_counts": {
+    "detected": 11,
+    "fatal_rows": 31
+  },
+  "selected_fatal_recall_wilson_95_ci": [
+    0.21116659093865403,
+    0.5305204593563113
+  ],
   "selected_macro_f1_profile_cluster_bootstrap_95_ci": [
     0.4108623726751615,
     0.4729327934900483

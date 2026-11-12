@@ -2,6 +2,7 @@
 import argparse
 import hashlib
 import json
+import math
 import platform
 from pathlib import Path
 from urllib.request import urlretrieve
@@ -36,6 +37,23 @@ def evaluate(y, prediction, probabilities, labels):
             "log_loss": log_loss(y, probabilities, labels=labels),
             "per_class": classification_report(y, prediction, labels=labels, output_dict=True, zero_division=0),
             "confusion_matrix": confusion_matrix(y, prediction, labels=labels).tolist()}
+
+
+def wilson_interval(successes, trials):
+    """Return a 95% Wilson interval for a binomial proportion."""
+    if isinstance(successes, (bool, np.bool_)) or not isinstance(successes, (int, np.integer)):
+        raise ValueError("successes must be an integer count")
+    if isinstance(trials, (bool, np.bool_)) or not isinstance(trials, (int, np.integer)):
+        raise ValueError("trials must be an integer count")
+    if trials < 1 or successes < 0 or successes > trials:
+        raise ValueError("counts must satisfy 0 <= successes <= trials and trials >= 1")
+    z = 1.959963984540054
+    rate = successes / trials
+    z_squared = z * z
+    denominator = 1 + z_squared / trials
+    center = (rate + z_squared / (2 * trials)) / denominator
+    margin = z * math.sqrt(rate * (1 - rate) / trials + z_squared / (4 * trials * trials)) / denominator
+    return [max(0.0, center - margin), min(1.0, center + margin)]
 
 
 def preprocess():
@@ -321,6 +339,10 @@ def run(path, output):
         idx = np.concatenate([rng.choice(rows, len(rows), replace=True) for rows in by_class])
         bootstrap.append(f1_score(truth[idx], pred[idx], labels=labels, average="macro", zero_division=0))
     interval = np.quantile(bootstrap, [.025, .975]).tolist()
+    fatal_rows = truth == "Fatal injury"
+    fatal_test_total = int(fatal_rows.sum())
+    fatal_test_caught = int(np.sum(fatal_rows & (pred == "Fatal injury")))
+    fatal_recall_interval = wilson_interval(fatal_test_caught, fatal_test_total)
     profile_bootstrap = profile_cluster_bootstrap_macro_f1(
         truth, pred, groups.iloc[test].to_numpy(), labels, n_resamples=300, seed=SEED)
     schema = {"features": FEATURES, "numeric": {"Hour": {"min": 0, "max": 23}, "Number_of_vehicles_involved": {"min": 1, "max": 20}},
@@ -335,6 +357,8 @@ def run(path, output):
               "models": reports, "development_grouped_cross_validation": development_cv,
               "validation_fatal_error_analysis": validation_fatal_analysis,
               "selected_macro_f1_bootstrap_95_ci": interval,
+              "selected_fatal_recall_test_counts": {"detected": fatal_test_caught, "fatal_rows": fatal_test_total},
+              "selected_fatal_recall_wilson_95_ci": fatal_recall_interval,
               "selected_macro_f1_profile_cluster_bootstrap_95_ci": profile_bootstrap["interval"],
               "bootstrap_replicates": 300, "profile_cluster_bootstrap": profile_bootstrap,
               "validation_permutation_importance": importance,
@@ -363,6 +387,8 @@ def run(path, output):
     plt.close(fig)
     print(json.dumps({"selected": selected_name, "test_macro_f1": reports[selected_name]["test"]["macro_f1"],
                       "stratified_row_bootstrap_95_ci": interval,
+                      "fatal_recall_test_counts": report["selected_fatal_recall_test_counts"],
+                      "fatal_recall_wilson_95_ci": fatal_recall_interval,
                       "profile_cluster_bootstrap_95_ci": profile_bootstrap["interval"],
                       "profile_cluster_bootstrap": profile_bootstrap,
                       "validation_fatal_error_analysis": validation_fatal_analysis,
