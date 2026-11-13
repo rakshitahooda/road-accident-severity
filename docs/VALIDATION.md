@@ -69,3 +69,9 @@ RoadLab now shows the observed correct/total counts, recall, and a 95% Wilson in
 - Added a 1,000-resample bootstrap that resamples complete identical-feature-profile groups and reports a descriptive sensitivity interval for the selected model's test fatal recall. The point estimate remains 11/31; the fixed model and holdout remain unchanged.
 - Feature-profile groups are not accident identifiers, so this is not incident-level inference. The existing Wilson interval remains alongside the group-sensitivity interval.
 - The Evidence view presents the group-resampled fatal-recall interval next to the per-class Wilson estimates and macro-F1 intervals.
+
+
+## Browser smoke test in CI on 2026-11-13
+
+- Added a pinned Playwright development dependency and a Chromium browser smoke step to GitHub Actions. Each Python 3.11/3.12 job now starts RoadLab locally and checks live inference, keyboard-accessible tabs, evaluation diagnostics, CSV export, responsive layout, and browser errors.
+- The same browser smoke script passed locally after the added profile-cluster fatal-recall diagnostic; 45 contract tests, Ruff, JavaScript syntax, compilation and diff checks also passed. Hosted Actions results are reported separately from these local checks.

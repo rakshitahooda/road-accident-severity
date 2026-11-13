@@ -21,3 +21,15 @@ jobs:
       - run: python -m pytest -q
       - run: ruff check roadlab tests scripts
       - run: node --check web/app.js
+      - run: python -m playwright install --with-deps chromium
+      - name: Run browser smoke check
+        run: |
+          python -m uvicorn roadlab.api:app --host 127.0.0.1 --port 8000 > /tmp/roadlab-api.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:8000/health; then break; fi
+            sleep 1
+          done
+          curl --fail --silent http://127.0.0.1:8000/health
+          python scripts/check_ui.py
