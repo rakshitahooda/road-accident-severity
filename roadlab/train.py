@@ -56,6 +56,31 @@ def wilson_interval(successes, trials):
     return [max(0.0, center - margin), min(1.0, center + margin)]
 
 
+
+def per_class_recall_intervals(y, prediction, labels):
+    """Report class recall counts and descriptive Wilson intervals on a fixed holdout."""
+    truth = np.asarray(y)
+    predicted = np.asarray(prediction)
+    if truth.ndim != 1 or predicted.ndim != 1 or len(truth) == 0 or len(truth) != len(predicted):
+        raise ValueError("y and prediction must be aligned nonempty one-dimensional arrays")
+    if not labels or len(set(labels)) != len(labels):
+        raise ValueError("labels must be a nonempty sequence of unique classes")
+    results = []
+    for label in labels:
+        selected = truth == label
+        total = int(selected.sum())
+        if total == 0:
+            raise ValueError(f"no observed rows for class {label!r}")
+        correct = int(np.sum(selected & (predicted == label)))
+        results.append({
+            "label": label,
+            "correct": correct,
+            "total": total,
+            "recall": correct / total,
+            "wilson_95_ci": wilson_interval(correct, total),
+        })
+    return results
+
 def preprocess():
     return ColumnTransformer([
         ("numeric", Pipeline([("impute", SimpleImputer(strategy="median")), ("scale", StandardScaler())]), NUMERIC),
@@ -404,6 +429,7 @@ def run(path, output):
               "selected_macro_f1_bootstrap_95_ci": interval,
               "selected_fatal_recall_test_counts": {"detected": fatal_test_caught, "fatal_rows": fatal_test_total},
               "selected_fatal_recall_wilson_95_ci": fatal_recall_interval,
+              "selected_per_class_recall_intervals": per_class_recall_intervals(truth, pred, labels),
               "selected_macro_f1_profile_cluster_bootstrap_95_ci": profile_bootstrap["interval"],
               "bootstrap_replicates": 300, "profile_cluster_bootstrap": profile_bootstrap,
               "validation_permutation_importance": importance,
@@ -434,6 +460,7 @@ def run(path, output):
                       "stratified_row_bootstrap_95_ci": interval,
                       "fatal_recall_test_counts": report["selected_fatal_recall_test_counts"],
                       "fatal_recall_wilson_95_ci": fatal_recall_interval,
+                      "per_class_recall_intervals": report["selected_per_class_recall_intervals"],
                       "profile_cluster_bootstrap_95_ci": profile_bootstrap["interval"],
                       "profile_cluster_bootstrap": profile_bootstrap,
                       "validation_fatal_error_analysis": validation_fatal_analysis,

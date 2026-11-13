@@ -1471,7 +1471,7 @@
               "lower": 0.5,
               "upper": 0.6,
               "count": 32,
-              "mean_score": 0.5336279963875975,
+              "mean_score": 0.5336279963875974,
               "fatal_rate": 0.09375
             },
             {
@@ -1517,6 +1517,38 @@
   "selected_fatal_recall_wilson_95_ci": [
     0.21116659093865403,
     0.5305204593563113
+  ],
+  "selected_per_class_recall_intervals": [
+    {
+      "label": "Fatal injury",
+      "correct": 11,
+      "total": 31,
+      "recall": 0.3548387096774194,
+      "wilson_95_ci": [
+        0.21116659093865403,
+        0.5305204593563113
+      ]
+    },
+    {
+      "label": "Serious Injury",
+      "correct": 136,
+      "total": 351,
+      "recall": 0.38746438746438744,
+      "wilson_95_ci": [
+        0.33797918711492897,
+        0.43938617412962694
+      ]
+    },
+    {
+      "label": "Slight Injury",
+      "correct": 1676,
+      "total": 2111,
+      "recall": 0.7939365229748934,
+      "wilson_95_ci": [
+        0.7761557184629525,
+        0.8106494979867113
+      ]
+    }
   ],
   "selected_macro_f1_profile_cluster_bootstrap_95_ci": [
     0.4108623726751615,
@@ -1585,7 +1617,7 @@
     }
   ],
   "runtime": {
-    "python": "3.12.14",
+    "python": "3.11.6",
     "sklearn": "1.6.1",
     "pandas": "2.2.3",
     "numpy": "1.26.4"

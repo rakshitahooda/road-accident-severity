@@ -50,3 +50,15 @@ The fixed test set contains 31 fatal-labelled rows, of which 11 were classified 
 
 - Repeated model training with Python 3.12.14; the balanced random forest remained selected and the 11/31 held-out fatal-case result remained unchanged. The full test suite passed: 40 checks.
 - GitHub Actions is configured to train and test on Python 3.11 and 3.12, run Ruff, and check frontend JavaScript syntax with Node 22. This local record does not claim a hosted Actions run has passed.
+
+
+## Per-class uncertainty reporting
+
+RoadLab now shows the observed correct/total counts, recall, and a 95% Wilson interval for each class on the fixed held-out test set. These binomial intervals describe sampling variation for the fixed predictions and holdout; they do not account for model selection, retraining, repeated feature profiles, or new locations and periods. Small fatal-class counts make the interval wide.
+
+
+## Rechecked locally on 2026-11-13 after adding per-class recall uncertainty
+
+- The Evidence view now pairs each held-out class recall with its correct/observed count and a 95% Wilson interval. This makes the differing evidence volume visible; intervals describe binomial sampling uncertainty for the fixed predictions, not model-selection or new-dataset uncertainty.
+- Training regenerated metrics from the reviewed dataset; the balanced forest remains selected with test macro-F1 0.442, and fatal recall is 11/31 (0.355; Wilson interval 0.211–0.531). The live inference model is unchanged in behavior.
+- Browser smoke assertions cover all three class rows and the interval display.

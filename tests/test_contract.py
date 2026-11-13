@@ -328,3 +328,29 @@ def test_profile_cluster_bootstrap_rejects_misaligned_rows():
 
     with pytest.raises(ValueError, match="same nonzero length"):
         profile_cluster_bootstrap_macro_f1(np.array(["a"]), np.array(["a", "b"]), np.array(["g"]), ["a", "b"])
+
+
+def test_per_class_recall_intervals_report_counts_and_small_sample_uncertainty():
+    from roadlab.train import per_class_recall_intervals
+
+    rows = per_class_recall_intervals(
+        ["Fatal injury", "Fatal injury", "Serious Injury", "Slight Injury", "Slight Injury"],
+        ["Fatal injury", "Serious Injury", "Serious Injury", "Slight Injury", "Slight Injury"],
+        ["Fatal injury", "Serious Injury", "Slight Injury"],
+    )
+
+    assert rows[0]["correct"] == 1
+    assert rows[0]["total"] == 2
+    assert rows[0]["recall"] == pytest.approx(.5)
+    assert rows[0]["wilson_95_ci"] == pytest.approx([.094531, .905469], abs=1e-5)
+    assert rows[1]["wilson_95_ci"] == pytest.approx([.20655, 1.0], abs=1e-4)
+    assert rows[2]["recall"] == 1.0
+    assert rows[2]["wilson_95_ci"][1] == 1.0
+
+
+def test_metadata_includes_intervals_for_each_test_class():
+    metrics = client.get("/api/metadata").json()["metrics"]
+    rows = metrics["selected_per_class_recall_intervals"]
+    assert [row["label"] for row in rows] == metrics["labels"]
+    assert all(0 <= row["correct"] <= row["total"] for row in rows)
+    assert all(len(row["wilson_95_ci"]) == 2 for row in rows)

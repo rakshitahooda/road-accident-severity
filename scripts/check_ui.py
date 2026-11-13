@@ -37,6 +37,10 @@ with sync_playwright() as p:
     page.locator('[data-tab=evaluation]').click()
     assert page.locator('#evaluation').is_visible()
     assert page.locator('#comparison tr').count() == 4
+    assert page.locator('#recalls tr').count() == 3
+    assert 'correct / observed' in page.locator('#evaluation').inner_text().lower()
+    assert 'fatal injury' in page.locator('#recalls').inner_text().lower()
+    assert 'wilson interval' in page.locator('#evaluation').inner_text().lower()
     assert '3 of 33 fatal-labelled validation rows' in page.locator('#fatal-audit-summary').inner_text()
     assert page.locator('#fatal-audit-breakdown tr').count() == 2
     assert 'exploratory' in page.locator('#fatal-audit-note').inner_text().lower()
