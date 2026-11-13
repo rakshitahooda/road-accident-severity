@@ -1518,6 +1518,19 @@
     0.21116659093865403,
     0.5305204593563113
   ],
+  "selected_fatal_recall_profile_cluster_bootstrap": {
+    "interval": [
+      0.1890890890890891,
+      0.5357829670329669
+    ],
+    "replicates": 1000,
+    "replicates_without_fatal": 0,
+    "test_profile_groups": 2258,
+    "fatal_rows": 31,
+    "fatal_correct": 11,
+    "observed_recall": 0.3548387096774194,
+    "interpretation": "Descriptive profile-cluster bootstrap sensitivity for this fixed model and test set; identical feature profiles are not incident IDs."
+  },
   "selected_per_class_recall_intervals": [
     {
       "label": "Fatal injury",

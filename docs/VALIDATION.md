@@ -62,3 +62,10 @@ RoadLab now shows the observed correct/total counts, recall, and a 95% Wilson in
 - The Evidence view now pairs each held-out class recall with its correct/observed count and a 95% Wilson interval. This makes the differing evidence volume visible; intervals describe binomial sampling uncertainty for the fixed predictions, not model-selection or new-dataset uncertainty.
 - Training regenerated metrics from the reviewed dataset; the balanced forest remains selected with test macro-F1 0.442, and fatal recall is 11/31 (0.355; Wilson interval 0.211–0.531). The live inference model is unchanged in behavior.
 - Browser smoke assertions cover all three class rows and the interval display.
+
+
+## Rechecked locally on 2026-11-13 after adding fatal-recall cluster sensitivity
+
+- Added a 1,000-resample bootstrap that resamples complete identical-feature-profile groups and reports a descriptive sensitivity interval for the selected model's test fatal recall. The point estimate remains 11/31; the fixed model and holdout remain unchanged.
+- Feature-profile groups are not accident identifiers, so this is not incident-level inference. The existing Wilson interval remains alongside the group-sensitivity interval.
+- The Evidence view presents the group-resampled fatal-recall interval next to the per-class Wilson estimates and macro-F1 intervals.

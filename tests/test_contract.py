@@ -330,6 +330,50 @@ def test_profile_cluster_bootstrap_rejects_misaligned_rows():
         profile_cluster_bootstrap_macro_f1(np.array(["a"]), np.array(["a", "b"]), np.array(["g"]), ["a", "b"])
 
 
+
+def test_profile_cluster_bootstrap_fatal_recall_is_reproducible_and_counted():
+    import numpy as np
+    from roadlab.train import profile_cluster_bootstrap_fatal_recall
+
+    truth = np.array(["Fatal injury", "Slight Injury", "Fatal injury", "Serious Injury", "Slight Injury"])
+    predicted = np.array(["Fatal injury", "Fatal injury", "Serious Injury", "Serious Injury", "Slight Injury"])
+    groups = np.array(["repeat", "repeat", "fatal-only", "fatal-only", "single"])
+    result = profile_cluster_bootstrap_fatal_recall(truth, predicted, groups, n_resamples=200, seed=7)
+
+    assert result == profile_cluster_bootstrap_fatal_recall(truth, predicted, groups, n_resamples=200, seed=7)
+    assert result["fatal_rows"] == 2
+    assert result["fatal_correct"] == 1
+    assert result["observed_recall"] == .5
+    assert result["test_profile_groups"] == 3
+    assert result["replicates"] == 200
+    assert len(result["interval"]) == 2
+    assert 0 <= result["interval"][0] <= result["interval"][1] <= 1
+    assert "not incident IDs" in result["interpretation"]
+
+
+def test_profile_cluster_fatal_recall_bootstrap_rejects_invalid_rows():
+    from roadlab.train import profile_cluster_bootstrap_fatal_recall
+
+    with pytest.raises(ValueError, match="aligned"):
+        profile_cluster_bootstrap_fatal_recall(["Fatal injury"], [], ["group"])
+    with pytest.raises(ValueError, match="missing values"):
+        profile_cluster_bootstrap_fatal_recall(["Fatal injury"], ["Fatal injury"], [None])
+    with pytest.raises(ValueError, match="occur"):
+        profile_cluster_bootstrap_fatal_recall(["Slight Injury"], ["Slight Injury"], ["group"])
+
+
+def test_metrics_include_fatal_profile_cluster_bootstrap():
+    metrics = json.loads((ROOT / "artifacts/metrics.json").read_text())
+    result = metrics["selected_fatal_recall_profile_cluster_bootstrap"]
+
+    assert result["fatal_rows"] == 31
+    assert result["fatal_correct"] == 11
+    assert result["observed_recall"] == pytest.approx(11 / 31)
+    assert result["replicates"] == 1000
+    assert result["test_profile_groups"] == 2258
+    assert len(result["interval"]) == 2
+    assert "not incident IDs" in result["interpretation"]
+
 def test_per_class_recall_intervals_report_counts_and_small_sample_uncertainty():
     from roadlab.train import per_class_recall_intervals
 

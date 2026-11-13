@@ -54,6 +54,8 @@ with sync_playwright() as p:
     assert 'no calibration transform is fitted' in page.locator('#fatal-calibration-note').inner_text().lower()
     assert page.locator('#fatal-threshold-model option').count() == 4
     assert '11/31 test cases' in page.locator('#fatal-recall-ci').inner_text()
+    assert page.locator('#interval .interval-card').count() == 3
+    assert 'fatal-recall profile sensitivity' in page.locator('#interval .interval-card').nth(2).inner_text().lower()
     assert 'wilson interval' in page.locator('#fatal-recall-ci').inner_text().lower()
     assert 'fatal recall' in page.locator('#fatal-threshold-scores').inner_text().lower()
     assert 'nonfatal false-alarm rate' in page.locator('#fatal-threshold-scores').inner_text().lower()
@@ -71,12 +73,14 @@ with sync_playwright() as p:
     csv_text = Path('/tmp/roadlab-fatal-cutoffs.csv').read_text()
     assert csv_text.startswith('\"threshold\",\"fatal_detected\"')
     assert len(csv_text.splitlines()) == 22
-    assert page.locator('#interval .interval-card').count() == 2
+    assert page.locator('#interval .interval-card').count() == 3
     interval_cards = page.locator('#interval .interval-card')
     assert 'stratified row bootstrap' in interval_cards.nth(0).inner_text().lower()
     assert '300 resamples' in interval_cards.nth(0).inner_text()
     assert 'profile-cluster sensitivity' in interval_cards.nth(1).inner_text().lower()
     assert '2,258 test profiles' in interval_cards.nth(1).inner_text()
+    assert 'fatal-recall profile sensitivity' in interval_cards.nth(2).inner_text().lower()
+    assert '1000 resamples' in interval_cards.nth(2).inner_text()
     assert 'not incident IDs' in page.locator('#interval-note').inner_text()
     page.locator('.threshold-explorer').screenshot(path='docs/evidence.png')
     page.locator('[data-tab=method]').click()

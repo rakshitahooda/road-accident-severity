@@ -359,6 +359,50 @@ def profile_cluster_bootstrap_macro_f1(y, prediction, groups, labels, n_resample
             "test_profile_groups": int(len(unique_groups))}
 
 
+def profile_cluster_bootstrap_fatal_recall(y, prediction, groups, fatal_label="Fatal injury", n_resamples=1000, seed=SEED):
+    """Resample complete identical-feature-profile groups for fatal-recall sensitivity."""
+    truth = np.asarray(y)
+    predicted = np.asarray(prediction)
+    group_values = np.asarray(groups)
+    if truth.ndim != 1 or predicted.ndim != 1 or group_values.ndim != 1 or len(truth) == 0 or len(truth) != len(predicted) or len(truth) != len(group_values):
+        raise ValueError("y, prediction and groups must be aligned nonempty one-dimensional arrays")
+    if isinstance(n_resamples, (bool, np.bool_)) or not isinstance(n_resamples, (int, np.integer)) or n_resamples < 1:
+        raise ValueError("n_resamples must be a positive integer")
+    fatal_rows = truth == fatal_label
+    if not fatal_rows.any():
+        raise ValueError("fatal_label must occur in y")
+    group_codes, unique_groups = pd.factorize(group_values, sort=False)
+    if (group_codes < 0).any():
+        raise ValueError("groups must not contain missing values")
+    rows_by_group = [np.flatnonzero(group_codes == code) for code in range(len(unique_groups))]
+    rng = np.random.default_rng(seed)
+    recalls = np.empty(n_resamples)
+    replicates_without_fatal = 0
+    for replicate in range(n_resamples):
+        sampled_groups = rng.integers(0, len(rows_by_group), size=len(rows_by_group))
+        sampled_rows = np.concatenate([rows_by_group[index] for index in sampled_groups])
+        sampled_fatal = truth[sampled_rows] == fatal_label
+        total = int(sampled_fatal.sum())
+        if total == 0:
+            replicates_without_fatal += 1
+            recalls[replicate] = np.nan
+        else:
+            recalls[replicate] = np.mean(predicted[sampled_rows][sampled_fatal] == fatal_label)
+    valid_recalls = recalls[np.isfinite(recalls)]
+    if not len(valid_recalls):
+        raise ValueError("no bootstrap resamples contained fatal rows")
+    return {
+        "interval": np.quantile(valid_recalls, [.025, .975]).tolist(),
+        "replicates": int(n_resamples),
+        "replicates_without_fatal": int(replicates_without_fatal),
+        "test_profile_groups": int(len(unique_groups)),
+        "fatal_rows": int(fatal_rows.sum()),
+        "fatal_correct": int(np.sum(fatal_rows & (predicted == fatal_label))),
+        "observed_recall": float(np.mean(predicted[fatal_rows] == fatal_label)),
+        "interpretation": "Descriptive profile-cluster bootstrap sensitivity for this fixed model and test set; identical feature profiles are not incident IDs.",
+    }
+
+
 def run(path, output):
     output.mkdir(parents=True, exist_ok=True)
     actual = hashlib.sha256(path.read_bytes()).hexdigest()
@@ -415,6 +459,8 @@ def run(path, output):
     fatal_recall_interval = wilson_interval(fatal_test_caught, fatal_test_total)
     profile_bootstrap = profile_cluster_bootstrap_macro_f1(
         truth, pred, groups.iloc[test].to_numpy(), labels, n_resamples=300, seed=SEED)
+    fatal_profile_bootstrap = profile_cluster_bootstrap_fatal_recall(
+        truth, pred, groups.iloc[test].to_numpy(), n_resamples=1000, seed=SEED)
     schema = {"features": FEATURES, "numeric": {"Hour": {"min": 0, "max": 23}, "Number_of_vehicles_involved": {"min": 1, "max": 20}},
               "categories": {c: sorted(X.iloc[train][c].dropna().unique().tolist()) for c in CATEGORICAL}}
     # Permutation importance is computed on validation, not used for model selection.
@@ -429,6 +475,7 @@ def run(path, output):
               "selected_macro_f1_bootstrap_95_ci": interval,
               "selected_fatal_recall_test_counts": {"detected": fatal_test_caught, "fatal_rows": fatal_test_total},
               "selected_fatal_recall_wilson_95_ci": fatal_recall_interval,
+              "selected_fatal_recall_profile_cluster_bootstrap": fatal_profile_bootstrap,
               "selected_per_class_recall_intervals": per_class_recall_intervals(truth, pred, labels),
               "selected_macro_f1_profile_cluster_bootstrap_95_ci": profile_bootstrap["interval"],
               "bootstrap_replicates": 300, "profile_cluster_bootstrap": profile_bootstrap,
@@ -460,6 +507,7 @@ def run(path, output):
                       "stratified_row_bootstrap_95_ci": interval,
                       "fatal_recall_test_counts": report["selected_fatal_recall_test_counts"],
                       "fatal_recall_wilson_95_ci": fatal_recall_interval,
+                      "fatal_recall_profile_cluster_bootstrap": fatal_profile_bootstrap,
                       "per_class_recall_intervals": report["selected_per_class_recall_intervals"],
                       "profile_cluster_bootstrap_95_ci": profile_bootstrap["interval"],
                       "profile_cluster_bootstrap": profile_bootstrap,
