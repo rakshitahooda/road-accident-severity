@@ -2,6 +2,8 @@
 
 A reproducible machine-learning experiment with a working local web interface and a validated FastAPI service. Developed as an AI-assisted third-year computer-science engineering study, expanding the Samatrix road-accident exercise into a testable software project. This is not an MIT-endorsed project or a claim of unaided student authorship.
 
+[![RoadLab checks](https://github.com/rakshitahooda/road-accident-severity/actions/workflows/checks.yml/badge.svg?branch=main)](https://github.com/rakshitahooda/road-accident-severity/actions/workflows/checks.yml)
+
 ![RoadLab interface](docs/desktop.png)
 
 ![RoadLab mobile interface](docs/mobile.png)
