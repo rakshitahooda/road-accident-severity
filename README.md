@@ -4,6 +4,8 @@ A reproducible machine-learning experiment with a working local web interface an
 
 ![RoadLab interface](docs/desktop.png)
 
+![RoadLab mobile interface](docs/mobile.png)
+
 ## What makes this more than a notebook
 
 - A shared feature contract for training and inference; ten interpretable scene/vehicle inputs rather than casualty outcomes.
