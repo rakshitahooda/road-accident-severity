@@ -75,3 +75,7 @@ RoadLab now shows the observed correct/total counts, recall, and a 95% Wilson in
 
 - Added a pinned Playwright development dependency and a Chromium browser smoke step to GitHub Actions. Each Python 3.11/3.12 job now starts RoadLab locally and checks live inference, keyboard-accessible tabs, evaluation diagnostics, CSV export, responsive layout, and browser errors.
 - The same browser smoke script passed locally after the added profile-cluster fatal-recall diagnostic; 45 contract tests, Ruff, JavaScript syntax, compilation and diff checks also passed. Hosted Actions results are reported separately from these local checks.
+
+## CI runner compatibility on 2026-11-14
+
+The latest hosted run failed before the tests could start: `ubuntu-latest` resolved to Ubuntu 26.04, where the pinned Playwright 1.51.0 cannot install Chromium dependencies. The prepared workflow change pins the runner to `ubuntu-24.04`. Local checks confirm the diff is clean; a new hosted run is still needed to verify browser installation and the CI smoke test.
