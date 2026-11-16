@@ -8,6 +8,15 @@ A reproducible machine-learning experiment with a working local web interface an
 
 ![RoadLab mobile interface](docs/mobile.png)
 
+## On this page
+
+- [What makes this more than a notebook](#what-makes-this-more-than-a-notebook)
+- [Quick start](#quick-start)
+- [Measured result](#measured-result)
+- [API example](#api-example)
+- [Project structure](#project-structure)
+- [Data, scope and attribution](#data-scope-and-attribution)
+
 ## What makes this more than a notebook
 
 - A shared feature contract for training and inference; ten interpretable scene/vehicle inputs rather than casualty outcomes.
@@ -18,18 +27,32 @@ A reproducible machine-learning experiment with a working local web interface an
 - Real local single/batch inference, strict input validation, OpenAPI documentation, responsive UI, automated tests and GitHub Actions.
 - Dataset hash checks, exact dependency versions, saved experiment metadata, model card and reproducible training command.
 
-## Quick start · Python 3.11
+## Quick start
+
+Use Python 3.11 or 3.12 and the commands for your shell.
+
+### Windows PowerShell
+
+```powershell
+py -3.11 -m venv .venv
+$python = ".\.venv\Scripts\python.exe"
+& $python -m pip install -r requirements-dev.txt
+& $python -m roadlab.train
+& $python -m pytest -q
+& $python -m ruff check roadlab tests scripts
+& $python -m uvicorn roadlab.api:app --host 127.0.0.1 --port 8000
+```
+
+### macOS / Linux
 
 ```sh
-python -m venv .venv
-# macOS/Linux
+python3.11 -m venv .venv
 source .venv/bin/activate
-# Windows PowerShell: .venv\Scripts\Activate.ps1
-pip install -r requirements-dev.txt
+python -m pip install -r requirements-dev.txt
 python -m roadlab.train
 python -m pytest -q
-ruff check roadlab tests
-uvicorn roadlab.api:app --host 127.0.0.1 --port 8000
+python -m ruff check roadlab tests scripts
+python -m uvicorn roadlab.api:app --host 127.0.0.1 --port 8000
 ```
 
 Open **http://127.0.0.1:8000** for the interface, or **http://127.0.0.1:8000/docs** for the API. Training downloads the reviewed public CSV mirror if missing, then verifies its SHA-256 before use. Raw data and serialized model are not committed. Training takes approximately a minute on the development machine; actual time varies. The ZIP release includes a trained model for convenience; only load joblib files you trust.
@@ -77,7 +100,7 @@ print(response.json())
 
 `POST /api/predict` accepts 1–100 records. Every feature must be present; use `null` for unknown values. Unknown categories, invalid numeric ranges and extra fields are rejected. Responses contain a predicted class and uncalibrated class scores, not a clinically or operationally reliable risk estimate. No input is persisted by application code. The service deliberately binds to localhost in the documented command; it has no authentication and must not be exposed directly to the internet.
 
-## Structure
+## Project structure
 
 ```text
 roadlab/core.py     feature contract and input validation
