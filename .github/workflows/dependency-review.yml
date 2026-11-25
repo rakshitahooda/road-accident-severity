@@ -1,0 +1,27 @@
+name: Dependency review
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      base_ref:
+        description: Branch or ref to compare with the selected workflow branch
+        required: true
+        default: main
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  dependency-review:
+    name: Check dependency changes
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Review dependency changes
+        uses: actions/dependency-review-action@v4
+        with:
+          base-ref: ${{ inputs.base_ref }}
+          head-ref: ${{ github.sha }}
