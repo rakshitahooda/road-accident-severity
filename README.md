@@ -4,6 +4,8 @@ A reproducible machine-learning experiment with a working local web interface an
 
 [![RoadLab checks](https://github.com/rakshitahooda/road-accident-severity/actions/workflows/checks.yml/badge.svg?branch=main)](https://github.com/rakshitahooda/road-accident-severity/actions/workflows/checks.yml)
 
+![RoadLab preview showing the local model response and evaluation metrics](docs/social-preview.png)
+
 ![RoadLab interface](docs/desktop.png)
 
 ![RoadLab mobile interface](docs/mobile.png)
